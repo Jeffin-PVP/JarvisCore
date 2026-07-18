@@ -2,92 +2,55 @@ const {
     Events
 } = require("discord.js");
 
+const CommandManager =
+    require("../managers/CommandManager");
 
 module.exports = {
 
     name: Events.InteractionCreate,
 
-
     async execute(interaction) {
-
 
         if (!interaction.isChatInputCommand()) {
             return;
         }
 
-
-
-        const command =
-            interaction.client.commands.get(
-                interaction.commandName
-            );
-
-
-
-        if (!command) {
-
-            console.log(
-                `Comando não encontrado: ${interaction.commandName}`
-            );
-
-            return;
-
-        }
-
-
-
         try {
 
-
-            await command.execute(
+            await CommandManager.execute(
                 interaction
             );
 
-
-        } catch(error) {
-
+        } catch (error) {
 
             console.error(
                 `Erro no comando ${interaction.commandName}:`,
                 error
             );
 
+            const payload = {
 
-
-            if (interaction.replied ||
-                interaction.deferred) {
-
-
-                await interaction.followUp({
-
-                    content:
+                content:
                     "❌ Ocorreu um erro ao executar o comando.",
 
-                    ephemeral:true
+                ephemeral: true
 
-                });
+            };
 
+            if (interaction.replied || interaction.deferred) {
+
+                await interaction.followUp(payload)
+                    .catch(() => {});
 
             } else {
 
-
-                await interaction.reply({
-
-                    content:
-                    "❌ Ocorreu um erro ao executar o comando.",
-
-                    ephemeral:true
-
-                });
-
+                await interaction.reply(payload)
+                    .catch(() => {});
 
             }
 
-
         }
 
-
     }
-
 
 };
