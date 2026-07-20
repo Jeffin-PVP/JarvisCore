@@ -11,44 +11,44 @@ const jobs = [
 
     {
         name: "Programador",
-        min: 350,
-        max: 700
+        min: 250,
+        max: 300
     },
 
     {
         name: "Entregador",
-        min: 150,
-        max: 350
+        min: 50,
+        max: 100
     },
 
     {
         name: "Minerador",
-        min: 300,
-        max: 650
+        min: 200,
+        max: 450
     },
 
     {
         name: "Policial",
-        min: 250,
-        max: 550
+        min: 200,
+        max: 450
     },
 
     {
         name: "Mecânico",
-        min: 250,
-        max: 500
+        min: 25,
+        max: 250
     },
 
     {
         name: "Fazendeiro",
         min: 150,
-        max: 400
+        max: 250
     },
 
     {
         name: "Streamer",
         min: 100,
-        max: 1000
+        max: 500
     },
 
     {
