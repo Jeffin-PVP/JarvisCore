@@ -887,7 +887,9 @@ TRANSAÇÕES
         limit = 10
     ) {
 
-        return await database.all(
+        console.log("Guild recebida:", guildId);
+
+        const rows = await database.all(
 
             `
         SELECT
@@ -906,6 +908,8 @@ TRANSAÇÕES
 
         FROM economy_users
 
+        WHERE guild_id = ?
+
         ORDER BY total DESC
 
         LIMIT ?
@@ -913,11 +917,17 @@ TRANSAÇÕES
 
             [
 
+                guildId,
+
                 limit
 
             ]
 
         );
+
+        console.table(rows);
+
+        return rows;
 
     }
 

@@ -81,7 +81,7 @@ module.exports = {
 
             description +=
 
-                `${icon} ${member.user.username}\n` +
+                `${icon} ${member.user.username} (${member.id})\n` +
 
                 `💵 Carteira: **${user.wallet.toLocaleString("pt-BR")}**\n` +
 
