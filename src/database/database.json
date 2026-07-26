@@ -1,0 +1,16 @@
+{
+    "guilds": {},
+    "warnings": [
+        {
+            "id": 1,
+            "guildId": "1482846394233389148",
+            "userId": "1255273244823650354",
+            "moderatorId": "1468713867939938335",
+            "moderatorTag": "jeffinpvp",
+            "reason": "Flood",
+            "createdAt": 1784069777306
+        }
+    ],
+    "memories": [],
+    "economy": {}
+}
