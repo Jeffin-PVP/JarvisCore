@@ -12,24 +12,26 @@ const ContextManager = require("./ContextManager");
 
 class AIManager {
 
+    /*
+    =====================================
+        CHAT NORMAL
+    =====================================
+    */
+
     static async chat({ message, question, context }) {
 
-        // Detecta a intenção
         const intent = IntentRouter.detect(question);
 
-        // Seleciona apenas as ferramentas necessárias
         const selectedTools = ToolSelector.select(
             intent,
             question
         );
 
-        // Monta o contexto conforme a intenção
         const promptContext = ContextManager.build(
             intent,
             context
         );
 
-        // Histórico
         const messages = [
 
             {
@@ -56,7 +58,6 @@ ${question}
 
         ];
 
-        // Primeira chamada
         const firstResponse = await groq.chat.completions.create({
 
             model: "llama-3.3-70b-versatile",
@@ -71,22 +72,21 @@ ${question}
 
         });
 
-        const assistantMessage = firstResponse.choices[0].message;
+        const assistantMessage =
+            firstResponse.choices[0].message;
 
-        // Caso não utilize ferramentas
         if (!assistantMessage.tool_calls) {
 
             return assistantMessage.content;
 
         }
 
-        // Adiciona resposta da IA
         messages.push(assistantMessage);
 
-        // Executa todas as ferramentas
         for (const toolCall of assistantMessage.tool_calls) {
 
-            const toolName = toolCall.function.name;
+            const toolName =
+                toolCall.function.name;
 
             let args = {};
 
@@ -102,15 +102,16 @@ ${question}
 
             }
 
-            const result = await ToolManager.execute(
+            const result =
+                await ToolManager.execute(
 
-                toolName,
+                    toolName,
 
-                message,
+                    message,
 
-                args
+                    args
 
-            );
+                );
 
             messages.push({
 
@@ -124,18 +125,152 @@ ${question}
 
         }
 
-        // Segunda chamada
-        const secondResponse = await groq.chat.completions.create({
+        const secondResponse =
+            await groq.chat.completions.create({
 
-            model: "llama-3.3-70b-versatile",
+                model: "llama-3.3-70b-versatile",
 
-            messages,
+                messages,
 
-            temperature: 0.3
+                temperature: 0.3
 
-        });
+            });
 
-        return secondResponse.choices[0].message.content;
+        return secondResponse
+            .choices[0]
+            .message
+            .content;
+
+    }
+
+    /*
+    =====================================
+        GERADOR DE EMBEDS
+    =====================================
+    */
+
+    static async generateEmbed(prompt) {
+
+        const response =
+            await groq.chat.completions.create({
+
+                model: "llama-3.3-70b-versatile",
+
+                temperature: 0.5,
+
+                messages: [
+
+                    {
+
+                        role: "system",
+
+                        content: `
+Você é um especialista em criar Embeds para Discord.
+
+Sua resposta deve ser APENAS um JSON válido.
+
+Formato:
+
+{
+  "title": "",
+  "description": "",
+  "color": "#5865F2",
+
+  "author": {
+    "name": "",
+    "iconURL": "",
+    "url": ""
+  },
+
+  "footer": {
+    "text": "",
+    "iconURL": ""
+  },
+
+  "thumbnail": "",
+
+  "image": "",
+
+  "timestamp": false,
+
+  "fields": [
+
+    {
+
+      "name": "",
+
+      "value": "",
+
+      "inline": false
+
+    }
+
+  ]
+
+}
+
+Regras:
+
+- Nunca escreva markdown.
+- Nunca utilize \`\`\`json.
+- Nunca explique nada.
+- Apenas JSON válido.
+- Se um campo não for necessário, deixe vazio.
+`
+
+                    },
+
+                    {
+
+                        role: "user",
+
+                        content: prompt
+
+                    }
+
+                ]
+
+            });
+
+        let content =
+            response.choices[0]
+                .message.content
+                .trim();
+
+        console.log("===== RESPOSTA DA IA =====");
+        console.log(content);
+
+        // Remove markdown
+        content = content
+            .replace(/```json/gi, "")
+            .replace(/```/g, "")
+            .trim();
+
+        // Caso a IA escreva texto antes do JSON
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+
+        if (start !== -1 && end !== -1) {
+
+            content = content.substring(
+                start,
+                end + 1
+            );
+
+        }
+
+        try {
+
+            return JSON.parse(content);
+
+        } catch (err) {
+
+            console.error("Erro ao converter JSON:");
+            console.error(content);
+
+            throw err;
+
+        }
 
     }
 

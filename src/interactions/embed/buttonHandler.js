@@ -5,6 +5,9 @@ const {
     ActionRowBuilder
 } = require("discord.js");
 
+const channelHandler =
+    require("./channelHandler");
+
 const EmbedButtons =
     require("./EmbedButtons");
 
@@ -102,6 +105,39 @@ module.exports = {
 
         /*
         =========================
+            IA
+        =========================
+        */
+
+        if (interaction.customId === "embed_ai") {
+
+            const {
+                ModalBuilder,
+                TextInputBuilder,
+                TextInputStyle,
+                ActionRowBuilder
+            } = require("discord.js");
+
+            const modal = new ModalBuilder()
+                .setCustomId("embed_ai_modal")
+                .setTitle("Criar Embed com IA");
+
+            const prompt = new TextInputBuilder()
+                .setCustomId("prompt")
+                .setLabel("Descreva a embed")
+                .setStyle(TextInputStyle.Paragraph)
+                .setPlaceholder("Ex: Crie uma embed azul anunciando uma manutenção do servidor.")
+                .setRequired(true);
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(prompt)
+            );
+
+            return interaction.showModal(modal);
+        }
+
+        /*
+        =========================
             IMAGENS
         =========================
         */
@@ -164,10 +200,10 @@ module.exports = {
         }
 
         /*
-=========================
-    AUTOR
-=========================
-*/
+        =========================
+            AUTOR
+        =========================
+        */
 
         if (interaction.customId === "embed_author") {
 
@@ -248,10 +284,10 @@ module.exports = {
         }
 
         /*
-=========================
-    RODAPÉ
-=========================
-*/
+        =========================
+            RODAPÉ
+        =========================
+        */
 
         if (interaction.customId === "embed_footer") {
 
@@ -395,6 +431,118 @@ module.exports = {
                         .addComponents(menu)
 
                 ]
+
+            });
+
+        }
+
+        /*
+        =========================
+            FIELDS
+        =========================
+        */
+
+        if (interaction.customId === "embed_fields") {
+
+            const modal = new ModalBuilder()
+                .setCustomId("embed_fields_modal")
+                .setTitle("Adicionar Field");
+
+            const name = new TextInputBuilder()
+                .setCustomId("field_name")
+                .setLabel("Nome")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+
+            const value = new TextInputBuilder()
+                .setCustomId("field_value")
+                .setLabel("Valor")
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true);
+
+            const inline = new TextInputBuilder()
+                .setCustomId("field_inline")
+                .setLabel("Inline? (sim/não)")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(false);
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(name),
+                new ActionRowBuilder().addComponents(value),
+                new ActionRowBuilder().addComponents(inline)
+            );
+
+            return interaction.showModal(modal);
+
+        }
+
+
+        /*
+        =========================
+            ENVIAR
+        =========================
+        */
+
+        if (interaction.customId === "embed_send") {
+
+            const channelId =
+                channelHandler.channels.get(
+                    interaction.user.id
+                );
+
+            if (!channelId) {
+
+                return interaction.reply({
+
+                    content:
+                        "❌ Escolha um canal primeiro.",
+
+                    flags: ["Ephemeral"]
+
+                });
+
+            }
+
+            const channel =
+                interaction.guild.channels.cache.get(
+                    channelId
+                );
+
+            if (!channel) {
+
+                return interaction.reply({
+
+                    content:
+                        "❌ Canal não encontrado.",
+
+                    flags: ["Ephemeral"]
+
+                });
+
+            }
+
+            await channel.send({
+
+                embeds: [
+
+                    interaction.message.embeds[0]
+
+                ]
+
+            });
+
+            channelHandler.channels.delete(
+                interaction.user.id
+            );
+
+            return interaction.update({
+
+                content:
+                    "✅ Embed enviada com sucesso!",
+
+                embeds: [],
+
+                components: []
 
             });
 

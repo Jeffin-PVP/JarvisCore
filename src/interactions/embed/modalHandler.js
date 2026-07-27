@@ -1,16 +1,118 @@
-const {
-    EmbedBuilder
-} = require("discord.js");
-
-const EmbedButtons =
-    require("./EmbedButtons");
+const AIManager =
+    require("../../ai/AIManager");
+const { EmbedBuilder } = require("discord.js");
+const EmbedButtons = require("./EmbedButtons");
 
 module.exports = {
 
     async execute(interaction) {
 
-        if (!interaction.isModalSubmit())
-            return;
+        if (!interaction.isModalSubmit()) return;
+
+        /*
+        =========================
+            IA
+        =========================
+        */
+
+        if (interaction.customId === "embed_ai_modal") {
+
+            const prompt = interaction.fields
+                .getTextInputValue("prompt")
+                .trim();
+
+            await interaction.deferReply({
+                flags: ["Ephemeral"]
+            });
+
+            try {
+
+                const data =
+                    await AIManager.generateEmbed(prompt);
+
+                const embed =
+                    new EmbedBuilder();
+
+                if (data.title)
+                    embed.setTitle(data.title);
+
+                if (data.description)
+                    embed.setDescription(data.description);
+
+                if (data.color)
+                    embed.setColor(data.color);
+
+                if (data.thumbnail)
+                    embed.setThumbnail(data.thumbnail);
+
+                if (data.image)
+                    embed.setImage(data.image);
+
+                if (data.timestamp)
+                    embed.setTimestamp();
+
+                if (data.author?.name) {
+
+                    embed.setAuthor({
+
+                        name: data.author.name,
+
+                        iconURL:
+                            data.author.iconURL || undefined,
+
+                        url:
+                            data.author.url || undefined
+
+                    });
+
+                }
+
+                if (data.footer?.text) {
+
+                    embed.setFooter({
+
+                        text: data.footer.text,
+
+                        iconURL:
+                            data.footer.iconURL || undefined
+
+                    });
+
+                }
+
+                if (
+                    Array.isArray(data.fields) &&
+                    data.fields.length
+                ) {
+
+                    embed.addFields(data.fields);
+
+                }
+
+                return interaction.editReply({
+
+                    embeds: [embed]
+
+                });
+
+            } catch (err) {
+
+                console.error(err);
+
+                return interaction.editReply({
+
+                    content:
+                        "❌ Não consegui gerar essa embed."
+
+                });
+
+            }
+
+        }
+
+        const embed = EmbedBuilder.from(
+            interaction.message.embeds[0]
+        );
 
         /*
         =========================
@@ -20,58 +122,30 @@ module.exports = {
 
         if (interaction.customId === "embed_edit_modal") {
 
-            const embed =
-                EmbedBuilder.from(
-                    interaction.message.embeds[0]
-                );
+            const title = interaction.fields
+                .getTextInputValue("title")
+                .trim();
 
-            const title =
-                interaction.fields
-                    .getTextInputValue("title")
-                    .trim();
+            const description = interaction.fields
+                .getTextInputValue("description")
+                .trim();
 
-            const description =
-                interaction.fields
-                    .getTextInputValue("description")
-                    .trim();
+            const color = interaction.fields
+                .getTextInputValue("color")
+                .trim();
 
-            const color =
-                interaction.fields
-                    .getTextInputValue("color")
-                    .trim();
-
-            if (title)
-                embed.setTitle(title);
-            else
-                embed.setTitle(null);
-
-            if (description)
-                embed.setDescription(description);
-            else
-                embed.setDescription(null);
+            embed.setTitle(title || null);
+            embed.setDescription(description || null);
 
             if (color) {
-
                 try {
-
                     embed.setColor(color);
-
                 } catch { }
-
             }
 
             return interaction.update({
-
-                embeds: [
-
-                    embed
-
-                ],
-
-                components:
-
-                    EmbedButtons.build()
-
+                embeds: [embed],
+                components: EmbedButtons.build()
             });
 
         }
@@ -84,130 +158,43 @@ module.exports = {
 
         if (interaction.customId === "embed_images_modal") {
 
-            const embed =
-                EmbedBuilder.from(
-                    interaction.message.embeds[0]
-                );
+            const thumbnail = interaction.fields
+                .getTextInputValue("thumbnail")
+                .trim();
 
-            const thumbnail =
-                interaction.fields
-                    .getTextInputValue("thumbnail")
-                    .trim();
+            const image = interaction.fields
+                .getTextInputValue("image")
+                .trim();
 
-            const image =
-                interaction.fields
-                    .getTextInputValue("image")
-                    .trim();
-
-            if (thumbnail)
-                embed.setThumbnail(thumbnail);
-            else
-                embed.setThumbnail(null);
-
-            if (image)
-                embed.setImage(image);
-            else
-                embed.setImage(null);
+            embed.setThumbnail(thumbnail || null);
+            embed.setImage(image || null);
 
             return interaction.update({
-
-                embeds: [
-
-                    embed
-
-                ],
-
-                components:
-
-                    EmbedButtons.build()
-
+                embeds: [embed],
+                components: EmbedButtons.build()
             });
 
         }
 
         /*
-=========================
-    RODAPÉ
-=========================
-*/
-
-        if (interaction.customId === "embed_footer_modal") {
-
-            const embed =
-                EmbedBuilder.from(
-                    interaction.message.embeds[0]
-                );
-
-            const text =
-                interaction.fields
-                    .getTextInputValue("footer_text")
-                    .trim();
-
-            const icon =
-                interaction.fields
-                    .getTextInputValue("footer_icon")
-                    .trim();
-
-            if (text) {
-
-                embed.setFooter({
-
-                    text,
-
-                    iconURL:
-                        icon || null
-
-                });
-
-            } else {
-
-                embed.setFooter(null);
-
-            }
-
-            return interaction.update({
-
-                embeds: [
-
-                    embed
-
-                ],
-
-                components:
-
-                    EmbedButtons.build()
-
-            });
-
-        }
-
-        /*
-=========================
-    AUTOR
-=========================
-*/
+        =========================
+            AUTOR
+        =========================
+        */
 
         if (interaction.customId === "embed_author_modal") {
 
-            const embed =
-                EmbedBuilder.from(
-                    interaction.message.embeds[0]
-                );
+            const name = interaction.fields
+                .getTextInputValue("author_name")
+                .trim();
 
-            const name =
-                interaction.fields
-                    .getTextInputValue("author_name")
-                    .trim();
+            const icon = interaction.fields
+                .getTextInputValue("author_icon")
+                .trim();
 
-            const icon =
-                interaction.fields
-                    .getTextInputValue("author_icon")
-                    .trim();
-
-            const url =
-                interaction.fields
-                    .getTextInputValue("author_url")
-                    .trim();
+            const url = interaction.fields
+                .getTextInputValue("author_url")
+                .trim();
 
             if (name) {
 
@@ -215,11 +202,9 @@ module.exports = {
 
                     name,
 
-                    iconURL:
-                        icon || null,
+                    iconURL: icon || undefined,
 
-                    url:
-                        url || null
+                    url: url || undefined
 
                 });
 
@@ -231,15 +216,96 @@ module.exports = {
 
             return interaction.update({
 
-                embeds: [
+                embeds: [embed],
 
-                    embed
+                components: EmbedButtons.build()
 
-                ],
+            });
 
-                components:
+        }
 
-                    EmbedButtons.build()
+        /*
+        =========================
+            RODAPÉ
+        =========================
+        */
+
+        if (interaction.customId === "embed_footer_modal") {
+
+            const text = interaction.fields
+                .getTextInputValue("footer_text")
+                .trim();
+
+            const icon = interaction.fields
+                .getTextInputValue("footer_icon")
+                .trim();
+
+            if (text) {
+
+                embed.setFooter({
+
+                    text,
+
+                    iconURL: icon || undefined
+
+                });
+
+            } else {
+
+                embed.setFooter(null);
+
+            }
+
+            return interaction.update({
+
+                embeds: [embed],
+
+                components: EmbedButtons.build()
+
+            });
+
+        }
+
+        /*
+        =========================
+            FIELDS
+        =========================
+        */
+
+        if (interaction.customId === "embed_fields_modal") {
+
+            const name = interaction.fields
+                .getTextInputValue("field_name")
+                .trim();
+
+            const value = interaction.fields
+                .getTextInputValue("field_value")
+                .trim();
+
+            const inline = interaction.fields
+                .getTextInputValue("field_inline")
+                .trim()
+                .toLowerCase() === "sim";
+
+            if (name && value) {
+
+                embed.addFields({
+
+                    name,
+
+                    value,
+
+                    inline
+
+                });
+
+            }
+
+            return interaction.update({
+
+                embeds: [embed],
+
+                components: EmbedButtons.build()
 
             });
 

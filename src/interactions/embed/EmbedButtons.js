@@ -16,84 +16,66 @@ class EmbedButtons {
             =========================
             */
 
-            new ActionRowBuilder()
+            new ActionRowBuilder().addComponents(
 
-                .addComponents(
+                new ButtonBuilder()
+                    .setCustomId("embed_edit")
+                    .setLabel("Editar")
+                    .setEmoji("📝")
+                    .setStyle(ButtonStyle.Primary),
 
-                    new ButtonBuilder()
+                new ButtonBuilder()
+                    .setCustomId("embed_ai")
+                    .setLabel("IA")
+                    .setEmoji("🤖")
+                    .setStyle(ButtonStyle.Success),
 
-                        .setCustomId("embed_edit")
+                new ButtonBuilder()
+                    .setCustomId("embed_images")
+                    .setLabel("Imagens")
+                    .setEmoji("🖼️")
+                    .setStyle(ButtonStyle.Secondary),
 
-                        .setLabel("Editar")
+                new ButtonBuilder()
+                    .setCustomId("embed_author")
+                    .setLabel("Autor")
+                    .setEmoji("👤")
+                    .setStyle(ButtonStyle.Secondary),
 
-                        .setEmoji("📝")
+                new ButtonBuilder()
+                    .setCustomId("embed_footer")
+                    .setLabel("Rodapé")
+                    .setEmoji("🦶")
+                    .setStyle(ButtonStyle.Secondary)
 
-                        .setStyle(ButtonStyle.Primary),
-
-                    new ButtonBuilder()
-
-                        .setCustomId("embed_images")
-
-                        .setLabel("Imagens")
-
-                        .setEmoji("🖼️")
-
-                        .setStyle(ButtonStyle.Secondary),
-
-                    new ButtonBuilder()
-
-                        .setCustomId("embed_author")
-
-                        .setLabel("Autor")
-
-                        .setEmoji("👤")
-
-                        .setStyle(ButtonStyle.Secondary)
-
-                ),
-
+            ),
             /*
             =========================
                 LINHA 2
             =========================
             */
 
-            new ActionRowBuilder()
+            new ActionRowBuilder().addComponents(
 
-                .addComponents(
+                new ButtonBuilder()
+                    .setCustomId("embed_fields")
+                    .setLabel("Fields")
+                    .setEmoji("➕")
+                    .setStyle(ButtonStyle.Secondary),
 
-                    new ButtonBuilder()
+                new ButtonBuilder()
+                    .setCustomId("embed_channel")
+                    .setLabel("Canal")
+                    .setEmoji("📢")
+                    .setStyle(ButtonStyle.Secondary),
 
-                        .setCustomId("embed_footer")
+                new ButtonBuilder()
+                    .setCustomId("embed_timestamp")
+                    .setLabel("Timestamp")
+                    .setEmoji("⏰")
+                    .setStyle(ButtonStyle.Secondary)
 
-                        .setLabel("Rodapé")
-
-                        .setEmoji("🦶")
-
-                        .setStyle(ButtonStyle.Secondary),
-
-                    new ButtonBuilder()
-
-                        .setCustomId("embed_channel")
-
-                        .setLabel("Canal")
-
-                        .setEmoji("📢")
-
-                        .setStyle(ButtonStyle.Secondary),
-
-                    new ButtonBuilder()
-
-                        .setCustomId("embed_timestamp")
-
-                        .setLabel("Timestamp")
-
-                        .setEmoji("⏰")
-
-                        .setStyle(ButtonStyle.Secondary)
-
-                ),
-
+            ),
             /*
             =========================
                 LINHA 3

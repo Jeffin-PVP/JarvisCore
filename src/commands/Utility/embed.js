@@ -25,6 +25,8 @@ module.exports = {
 
     async execute(interaction) {
 
+        console.log("Embed executado");
+
         /*
         =========================
             EMBED PADRÃO
@@ -70,9 +72,7 @@ module.exports = {
 
             components:
 
-                EmbedButtons.build(),
-
-            ephemeral: true
+                EmbedButtons.build()
 
         });
 
