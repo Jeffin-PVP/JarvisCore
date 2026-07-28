@@ -43,17 +43,48 @@ module.exports = new class extends Tool {
     }
 
 
-    async execute(message,args){
-
-
-        await message.guild.members.fetch();
-
+    async execute(message, args) {
 
         const query = args.query.toLowerCase();
 
+        // Antes: message.guild.members.fetch() pedia TODOS os membros
+        // do servidor via Gateway (opcode 8, query: '', limit: 0) toda
+        // vez que essa tool era chamada. Isso é uma operação pesada e
+        // o Discord aplica rate limit agressivo nela — daí os erros
+        // "GatewayRateLimitError: Request with opcode 8 was rate limited".
+        //
+        // Agora: pedimos só os membros que batem com a query (até 10),
+        // que é bem mais leve e não esbarra no mesmo limite.
+        let members;
 
-        return message.guild.members.cache
+        try {
 
+            members = await message.guild.members.fetch({
+                query,
+                limit: 10
+            });
+
+        } catch (error) {
+
+            // Se ainda assim bater rate limit (ex: muitas buscas em
+            // sequência), tenta usar o que já estiver em cache antes
+            // de desistir.
+            members = message.guild.members.cache.filter(member =>
+
+                member.user.username.toLowerCase().includes(query) ||
+                member.displayName.toLowerCase().includes(query)
+
+            );
+
+            if (members.size === 0) {
+
+                throw error;
+
+            }
+
+        }
+
+        return members
             .filter(member =>
 
                 member.user.username
@@ -72,11 +103,11 @@ module.exports = new class extends Tool {
 
             .map(member => ({
 
-                id:member.id,
+                id: member.id,
 
-                username:member.user.username,
+                username: member.user.username,
 
-                nickname:member.displayName
+                nickname: member.displayName
 
             }));
 

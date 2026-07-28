@@ -234,7 +234,21 @@ class ToolManager {
      */
     static getTools() {
 
-        return Object.values(tools);
+        return Object.values(tools).map(tool => ({
+
+            type: "function",
+
+            function: {
+
+                name: tool.name,
+
+                description: tool.description,
+
+                parameters: tool.parameters
+
+            }
+
+        }));
 
     }
 

@@ -58,6 +58,13 @@ Autor:
 
 Servidor:
 - Nome: ${context.server.name}
+
+Canal atual:
+- Nome: #${context.channel.name}
+- ID: ${context.channel.id}
+
+Autor:
+- Nome: ${context.author.username}
 `;
 
             // ==========================

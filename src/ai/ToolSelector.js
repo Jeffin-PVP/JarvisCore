@@ -323,9 +323,33 @@ class ToolSelector {
 
         }
 
-        return fullSchema.filter(schema =>
-            selected.has(schema.function.name)
-        );
+        // Fallback: se nenhuma regra bateu (ex: intent "chat" ou
+        // uma pergunta com fraseado diferente das keywords),
+        // não deixe a IA sem nenhuma ferramenta. Nesses casos,
+        // devolvemos o schema completo, mas com forceToolUse=false,
+        // já que pode ser um papo comum que não precisa de tool
+        // nenhuma (e forçar aqui obrigaria o modelo a chamar algo
+        // à toa).
+        if (selected.size === 0) {
+
+            return {
+                tools: fullSchema,
+                forceToolUse: false
+            };
+
+        }
+
+        // Quando uma regra específica bateu, sabemos que essa
+        // pergunta precisa de uma tool de verdade. Nesse caso
+        // forçamos o uso (tool_choice: "required") para o modelo
+        // não "narrar" em texto que vai usar a ferramenta em vez
+        // de realmente chamá-la.
+        return {
+            tools: fullSchema.filter(schema =>
+                selected.has(schema.function.name)
+            ),
+            forceToolUse: true
+        };
 
     }
 

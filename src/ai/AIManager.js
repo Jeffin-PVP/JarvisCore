@@ -22,7 +22,7 @@ class AIManager {
 
         const intent = IntentRouter.detect(question);
 
-        const selectedTools = ToolSelector.select(
+        const { tools: selectedTools, forceToolUse } = ToolSelector.select(
             intent,
             question
         );
@@ -66,9 +66,9 @@ ${question}
 
             tools: selectedTools,
 
-            tool_choice: "auto",
+            tool_choice: forceToolUse ? "required" : "auto",
 
-            temperature: 0.3
+            temperature: 0.15
 
         });
 
@@ -132,7 +132,7 @@ ${question}
 
                 messages,
 
-                temperature: 0.3
+                temperature: 0.15
 
             });
 
@@ -156,7 +156,7 @@ ${question}
 
                 model: "llama-3.3-70b-versatile",
 
-                temperature: 0.5,
+                temperature: 0.15,
 
                 messages: [
 
