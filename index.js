@@ -4,6 +4,9 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 
+const ApiServer =
+    require("./src/api/server");
+
 const {
     Client,
     GatewayIntentBits,
@@ -227,6 +230,12 @@ client.once(
         console.log(
             `👤 Logado como: ${client.user.tag}`
         );
+
+        const api =
+            new ApiServer(client);
+
+
+        api.start(3000);
 
         console.log(
             `🆔 ID: ${client.user.id}`
