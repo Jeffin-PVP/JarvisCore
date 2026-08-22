@@ -1,47 +1,72 @@
-const Tool = require("../../structures/Tool");
+module.exports = {
 
-module.exports = new class extends Tool {
+    name: "getRules",
 
-    constructor() {
+    description:
+        "Obtém os canais relacionados às regras e sistema do servidor.",
 
-        super({
+    category: "Server",
 
-            name: "getRules",
+    guildOnly: true,
 
-            description: "Obtém os canais relacionados às regras e sistema do servidor.",
+    ownerOnly: false,
 
-            category: "Server"
+    parameters: {
 
-        });
+        type: "object",
 
-    }
+        properties: {},
+
+        required: []
+
+    },
 
     async execute(message) {
 
         const guild = message.guild;
 
+        if (!guild) {
+
+            return {
+
+                success: false,
+
+                message: "Esta ferramenta só pode ser usada em um servidor."
+
+            };
+
+        }
+
         return {
 
-            rulesChannel: guild.rulesChannel
-                ? {
-                    id: guild.rulesChannel.id,
-                    name: guild.rulesChannel.name
-                }
-                : null,
+            success: true,
 
-            systemChannel: guild.systemChannel
-                ? {
-                    id: guild.systemChannel.id,
-                    name: guild.systemChannel.name
-                }
-                : null,
+            message: "Informações dos canais de regras obtidas.",
 
-            publicUpdatesChannel: guild.publicUpdatesChannel
-                ? {
-                    id: guild.publicUpdatesChannel.id,
-                    name: guild.publicUpdatesChannel.name
-                }
-                : null
+            data: {
+
+                rulesChannel: guild.rulesChannel
+                    ? {
+                        id: guild.rulesChannel.id,
+                        name: guild.rulesChannel.name
+                    }
+                    : null,
+
+                systemChannel: guild.systemChannel
+                    ? {
+                        id: guild.systemChannel.id,
+                        name: guild.systemChannel.name
+                    }
+                    : null,
+
+                publicUpdatesChannel: guild.publicUpdatesChannel
+                    ? {
+                        id: guild.publicUpdatesChannel.id,
+                        name: guild.publicUpdatesChannel.name
+                    }
+                    : null
+
+            }
 
         };
 
