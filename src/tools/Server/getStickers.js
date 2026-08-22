@@ -1,34 +1,56 @@
-const Tool = require("../../structures/Tool");
+module.exports = {
 
-module.exports = new class extends Tool {
+    name: "getStickers",
 
-    constructor() {
+    description: "Lista todas as figurinhas do servidor.",
 
-        super({
+    category: "Server",
 
-            name: "getStickers",
+    guildOnly: true,
 
-            description: "Lista todas as figurinhas do servidor.",
+    ownerOnly: false,
 
-            category: "Server"
+    parameters: {
 
-        });
+        type: "object",
 
-    }
+        properties: {},
+
+        required: []
+
+    },
 
     async execute(message) {
 
-        return message.guild.stickers.cache.map(sticker => ({
+        if (!message.guild) {
 
-            id: sticker.id,
+            return {
 
-            name: sticker.name,
+                success: false,
 
-            description: sticker.description,
+                message: "Este comando só pode ser utilizado em servidores."
 
-            tags: sticker.tags
+            };
 
-        }));
+        }
+
+        return {
+
+            success: true,
+
+            data: message.guild.stickers.cache.map(sticker => ({
+
+                id: sticker.id,
+
+                name: sticker.name,
+
+                description: sticker.description,
+
+                tags: sticker.tags
+
+            }))
+
+        };
 
     }
 

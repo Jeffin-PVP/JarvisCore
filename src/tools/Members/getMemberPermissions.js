@@ -1,90 +1,87 @@
-const Tool = require("../../structures/Tool");
+module.exports = {
 
-module.exports = new class extends Tool {
+    name: "getMemberPermissions",
 
+    description: "Verifica as permissões de um membro.",
 
-    constructor() {
+    category: "Members",
 
-        super({
+    guildOnly: true,
 
-            name: "getMemberPermissions",
+    ownerOnly: false,
 
-            description: "Verifica as permissões de um membro.",
+    parameters: {
 
-            category: "Members",
+        type: "object",
 
-            parameters: {
+        properties: {
 
-                type: "object",
+            userId: {
 
-                properties: {
+                type: "string",
 
-                    userId: {
-
-                        type: "string"
-
-                    }
-
-                },
-
-                required: [
-
-                    "userId"
-
-                ]
+                description: "ID do usuário."
 
             }
 
-        });
+        },
 
-    }
+        required: [
 
+            "userId"
+
+        ]
+
+    },
 
     async execute(message, args) {
 
-
-        const member = await message.guild.members.fetch(args.userId)
+        const member = await message.guild.members
+            .fetch(args.userId)
             .catch(() => null);
-
 
         if (!member) {
 
             return {
 
-                success:false,
+                success: false,
 
-                message:"Usuário não encontrado."
+                message: "Usuário não encontrado."
 
             };
 
         }
 
-
         const permissions = member.permissions;
-
 
         return {
 
-            administrator: permissions.has("Administrator"),
+            success: true,
 
-            manageGuild: permissions.has("ManageGuild"),
+            message: `Permissões de ${member.user.username} obtidas com sucesso.`,
 
-            manageRoles: permissions.has("ManageRoles"),
+            data: {
 
-            manageChannels: permissions.has("ManageChannels"),
+                administrator: permissions.has("Administrator"),
 
-            manageMessages: permissions.has("ManageMessages"),
+                manageGuild: permissions.has("ManageGuild"),
 
-            kickMembers: permissions.has("KickMembers"),
+                manageRoles: permissions.has("ManageRoles"),
 
-            banMembers: permissions.has("BanMembers"),
+                manageChannels: permissions.has("ManageChannels"),
 
-            moderateMembers: permissions.has("ModerateMembers")
+                manageMessages: permissions.has("ManageMessages"),
+
+                kickMembers: permissions.has("KickMembers"),
+
+                banMembers: permissions.has("BanMembers"),
+
+                moderateMembers: permissions.has("ModerateMembers")
+
+            }
 
         };
 
-
     }
-
 
 };

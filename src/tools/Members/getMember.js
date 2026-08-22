@@ -1,54 +1,47 @@
-const Tool = require("../../structures/Tool");
+module.exports = {
 
-module.exports = new class extends Tool {
+    name: "getMember",
 
-    constructor() {
+    description:
+        "Obtém informações de um membro do servidor usando APENAS o ID numérico do Discord. Nunca use nomes ou apelidos. Se você possui apenas um nome, utilize searchMember antes.",
 
-        super({
+    category: "Members",
 
-            name: "getMember",
+    guildOnly: true,
 
-            description:
-                "Obtém informações de um membro do servidor usando APENAS o ID numérico do Discord. Nunca use nomes ou apelidos. Se você possui apenas um nome, utilize searchMember antes.",
+    ownerOnly: false,
 
-            category: "Members",
+    parameters: {
 
-            parameters: {
+        type: "object",
 
-                type: "object",
+        properties: {
 
-                properties: {
+            userId: {
 
-                    userId: {
+                type: "string",
 
-                        type: "string",
-
-                        description: "ID do usuário."
-
-                    }
-
-                },
-
-                required: [
-
-                    "userId"
-
-                ]
+                description: "ID do usuário."
 
             }
 
-        });
+        },
 
-    }
+        required: [
 
+            "userId"
+
+        ]
+
+    },
 
     async execute(message, args) {
 
         console.log("[getMember] Args recebidos:", args);
-        
-        const member = await message.guild.members.fetch(args.userId)
-            .catch(() => null);
 
+        const member = await message.guild.members
+            .fetch(args.userId)
+            .catch(() => null);
 
         if (!member) {
 
@@ -62,42 +55,49 @@ module.exports = new class extends Tool {
 
         }
 
-
         return {
 
-            id: member.id,
+            success: true,
 
-            username: member.user.username,
+            message: `Informações de ${member.user.username} obtidas com sucesso.`,
 
-            displayName: member.displayName,
+            data: {
 
-            nickname: member.nickname,
+                id: member.id,
 
-            bot: member.user.bot,
+                username: member.user.username,
 
-            createdAt: member.user.createdAt,
+                displayName: member.displayName,
 
-            joinedAt: member.joinedAt,
+                nickname: member.nickname,
 
-            roles: member.roles.cache
+                bot: member.user.bot,
 
-                .filter(role => role.name !== "@everyone")
+                createdAt: member.user.createdAt,
 
-                .map(role => ({
+                joinedAt: member.joinedAt,
 
-                    id: role.id,
+                roles: member.roles.cache
 
-                    name: role.name,
+                    .filter(role => role.name !== "@everyone")
 
-                    color: role.hexColor
+                    .map(role => ({
 
-                })),
+                        id: role.id,
 
-            boosting: Boolean(member.premiumSince),
+                        name: role.name,
 
-            timeout: Boolean(member.communicationDisabledUntil),
+                        color: role.hexColor
 
-            timeoutUntil: member.communicationDisabledUntil
+                    })),
+
+                boosting: Boolean(member.premiumSince),
+
+                timeout: Boolean(member.communicationDisabledUntil),
+
+                timeoutUntil: member.communicationDisabledUntil
+
+            }
 
         };
 

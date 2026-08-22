@@ -4,11 +4,10 @@ const systemPrompt = require("./systemPrompt");
 
 const ToolManager = require("./ToolManager");
 
-const IntentRouter = require("./IntentRouter");
+const ToolPlanner = require("./ToolPlanner");
 
-const ToolSelector = require("./ToolSelector");
-
-const ContextManager = require("./ContextManager");
+const ExecutionContext =
+    require("./ExecutionContext");
 
 class AIManager {
 
@@ -20,123 +19,169 @@ class AIManager {
 
     static async chat({ message, question, context }) {
 
-        const intent = IntentRouter.detect(question);
+        const plan =
+            await ToolPlanner.plan(question);
 
-        const { tools: selectedTools, forceToolUse } = ToolSelector.select(
-            intent,
-            question
-        );
+        // Nenhuma ferramenta necessária
+        if (!plan.actions || plan.actions.length === 0) {
 
-        const promptContext = ContextManager.build(
-            intent,
-            context
-        );
+            const response =
+                await groq.chat.completions.create({
 
-        const messages = [
+                    model: "openai/gpt-oss-120b",
 
-            {
+                    temperature: 0.3,
 
-                role: "system",
+                    messages: [
 
-                content: systemPrompt
+                        {
 
-            },
+                            role: "system",
 
-            {
+                            content: systemPrompt
 
-                role: "user",
+                        },
 
-                content: `
-${promptContext}
+                        {
 
-=== PERGUNTA ===
+                            role: "user",
 
-${question}
-`
+                            content: question
 
-            }
+                        }
 
-        ];
+                    ]
 
-        const firstResponse = await groq.chat.completions.create({
+                });
 
-            model: "llama-3.3-70b-versatile",
-
-            messages,
-
-            tools: selectedTools,
-
-            tool_choice: forceToolUse ? "required" : "auto",
-
-            temperature: 0.15
-
-        });
-
-        const assistantMessage =
-            firstResponse.choices[0].message;
-
-        if (!assistantMessage.tool_calls) {
-
-            return assistantMessage.content;
+            return response
+                .choices[0]
+                .message
+                .content;
 
         }
 
-        messages.push(assistantMessage);
+        const results = [];
 
-        for (const toolCall of assistantMessage.tool_calls) {
+        // Contexto da execução atual
+        const execution =
+            new ExecutionContext();
 
-            const toolName =
-                toolCall.function.name;
+        // Executa todas as ferramentas
+        for (const action of plan.actions) {
 
-            let args = {};
+            console.log("\n====== TOOL ======");
+            console.log(action.tool);
 
-            try {
+            console.log("====== ARGS ======");
+            console.log(action.arguments);
 
-                args = JSON.parse(
-                    toolCall.function.arguments || "{}"
-                );
+            // Substitui a categoria criada anteriormente
+            if (
 
-            } catch {
+                action.arguments?.parentCategory === "__LAST_CATEGORY__"
 
-                args = {};
+                &&
+
+                execution.has("lastCategory")
+
+            ) {
+
+                action.arguments.parentCategory =
+                    execution.get("lastCategory");
 
             }
 
             const result =
                 await ToolManager.execute(
 
-                    toolName,
+                    action.tool,
 
                     message,
 
-                    args
+                    action.arguments || {}
 
                 );
 
-            messages.push({
+            console.log("====== RESULT ======");
+            console.log(result);
 
-                role: "tool",
+            // Guarda a última categoria criada
+            if (
 
-                tool_call_id: toolCall.id,
+                action.tool === "createCategory"
 
-                content: JSON.stringify(result)
+                &&
+
+                result.success
+
+            ) {
+
+                execution.set(
+
+                    "lastCategory",
+
+                    result.id
+
+                );
+
+            }
+
+            results.push({
+
+                tool: action.tool,
+
+                result
 
             });
 
         }
 
-        const secondResponse =
+        // Segunda chamada da IA
+        const response =
             await groq.chat.completions.create({
 
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b",
 
-                messages,
+                temperature: 0.2,
 
-                temperature: 0.15
+                messages: [
+
+                    {
+
+                        role: "system",
+
+                        content: `
+Você deve responder ao usuário utilizando APENAS os resultados das ferramentas.
+
+Nunca invente informações.
+
+Se alguma ferramenta falhou, explique o motivo.
+
+Se todas funcionaram, informe o sucesso de forma natural.
+`
+
+                    },
+
+                    {
+
+                        role: "user",
+
+                        content: `Pergunta:
+
+${question}
+
+Resultados:
+
+${JSON.stringify(results, null, 2)}`
+
+                    }
+
+                ]
 
             });
 
-        return secondResponse
+        return response
             .choices[0]
             .message
             .content;
@@ -154,7 +199,7 @@ ${question}
         const response =
             await groq.chat.completions.create({
 
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b",
 
                 temperature: 0.15,
 
@@ -240,13 +285,14 @@ Regras:
         console.log("===== RESPOSTA DA IA =====");
         console.log(content);
 
-        // Remove markdown
         content = content
+
             .replace(/```json/gi, "")
+
             .replace(/```/g, "")
+
             .trim();
 
-        // Caso a IA escreva texto antes do JSON
         const start = content.indexOf("{");
         const end = content.lastIndexOf("}");
 

@@ -1,30 +1,48 @@
-const Tool = require("../../structures/Tool");
+module.exports = {
 
-module.exports = new class extends Tool {
+    name: "getServerInfo",
 
-    constructor() {
+    description: "Obtém todas as informações do servidor.",
 
-        super({
+    category: "Server",
 
-            name: "getServerInfo",
+    guildOnly: true,
 
-            description: "Obtém todas as informações do servidor.",
+    ownerOnly: false,
 
-            category: "Server"
+    parameters: {
 
-        });
+        type: "object",
 
-    }
+        properties: {},
+
+        required: []
+
+    },
 
     async execute(message) {
 
         const guild = message.guild;
+
+        if (!guild) {
+
+            return {
+
+                success: false,
+
+                message: "Este comando só pode ser utilizado em servidores."
+
+            };
+
+        }
 
         await guild.fetch();
 
         const owner = await guild.fetchOwner();
 
         return {
+
+            success: true,
 
             id: guild.id,
 
