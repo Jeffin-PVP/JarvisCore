@@ -1,4 +1,5 @@
 const tools = require("../tools");
+const GuildRepository = require("../database/repositories/GuildRepository");
 
 class ToolManager {
 
@@ -30,6 +31,26 @@ class ToolManager {
             throw new Error(
                 "Esta ferramenta só pode ser utilizada em servidores."
             );
+
+        }
+
+
+        // Módulo de moderação desativado no servidor
+        if (
+            tool.category === "Moderation" &&
+            message.guild
+        ) {
+
+            const moderationEnabled =
+                await GuildRepository.isModerationEnabled(message.guild.id);
+
+            if (!moderationEnabled) {
+
+                throw new Error(
+                    "O módulo de moderação está desativado neste servidor. Ative com /config moderacao ativado:true"
+                );
+
+            }
 
         }
 

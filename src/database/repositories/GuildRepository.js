@@ -152,24 +152,16 @@ class GuildRepository {
 
     }
 
-static async setLogChannel({
-    guildId,
-    channelId
-}) {
+    static async setLogChannel({
+        guildId,
+        channelId
+    }) {
 
-    console.log("SALVANDO LOG CHANNEL");
-    console.log(guildId);
-    console.log(channelId);
+        await this.update(guildId, {
+            log_channel: channelId
+        });
 
-    await this.update(guildId, {
-        log_channel: channelId
-    });
-
-    const teste = await this.getSettings(guildId);
-
-    console.log("Depois do update:");
-    console.log(teste);
-}
+    }
 
     /*
     =========================
@@ -276,6 +268,59 @@ static async setLogChannel({
             }
 
         );
+
+    }
+
+    /*
+    =========================
+        CATEGORIAS DE LOG
+    =========================
+    */
+
+    static async getDisabledCategories(guildId) {
+
+        const settings =
+            await this.getSettings(guildId);
+
+        const raw = settings.log_disabled_categories;
+
+        if (!raw)
+            return [];
+
+        return raw
+            .split(",")
+            .map(value => value.trim())
+            .filter(Boolean);
+
+    }
+
+    static async isCategoryEnabled(guildId, category) {
+
+        const disabled =
+            await this.getDisabledCategories(guildId);
+
+        return !disabled.includes(category);
+
+    }
+
+    static async setCategoryEnabled(guildId, category, enabled) {
+
+        const disabled =
+            await this.getDisabledCategories(guildId);
+
+        const set = new Set(disabled);
+
+        if (enabled) {
+            set.delete(category);
+        } else {
+            set.add(category);
+        }
+
+        await this.update(guildId, {
+            log_disabled_categories: Array.from(set).join(",")
+        });
+
+        return Array.from(set);
 
     }
 

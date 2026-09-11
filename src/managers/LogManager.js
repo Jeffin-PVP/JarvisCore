@@ -1,4 +1,5 @@
 const GuildRepository = require("../database/repositories/GuildRepository");
+const { CATEGORY_OF } = require("./LogCategories");
 
 const Builders = require("./logs");
 
@@ -32,6 +33,24 @@ class LogManager {
                 );
 
                 return false;
+
+            }
+
+            // Verifica se a categoria deste tipo de log está ativada
+
+            const category = CATEGORY_OF[data.type];
+
+            if (category) {
+
+                const enabled =
+                    await GuildRepository.isCategoryEnabled(
+                        data.guild.id,
+                        category
+                    );
+
+                if (!enabled) {
+                    return false;
+                }
 
             }
 

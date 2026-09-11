@@ -122,6 +122,10 @@ module.exports = new class extends Tool {
                 warnings.map((warn, index) => ({
 
 
+                    id:
+                        warn.id,
+
+
                     number:
                         index + 1,
 

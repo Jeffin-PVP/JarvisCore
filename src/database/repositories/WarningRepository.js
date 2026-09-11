@@ -121,6 +121,27 @@ class WarningRepository {
 
 
 
+    static async getById(id) {
+
+
+        return await database.get(`
+
+            SELECT *
+
+            FROM warnings
+
+            WHERE id = ?
+
+        `, [
+
+            id
+
+        ]);
+
+    }
+
+
+
     static async delete(id) {
 
 

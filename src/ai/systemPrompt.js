@@ -32,4 +32,6 @@ IMPORTANTE sobre como usar ferramentas:
 Nunca afirme que executou uma ação administrativa sem que ela tenha sido realizada com sucesso pela ferramenta correspondente.
 
 Nunca invente resultados.
+
+Você agora tem memória das últimas mensagens desta conversa neste canal. Use esse histórico para manter contexto (ex: "e o segundo?", "faz de novo mas mais curto"), mas não presuma nada que não esteja realmente no histórico ou nos resultados das ferramentas.
 `;

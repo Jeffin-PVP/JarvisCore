@@ -5,6 +5,7 @@ const {
 const Tool = require("../../structures/Tool");
 
 const LogManager = require("../../managers/LogManager");
+const actionSuppression = require("../../utils/actionSuppression");
 const LogTypes = require("../../managers/LogTypes");
 
 
@@ -227,6 +228,8 @@ module.exports = new class extends Tool {
 
         try {
 
+
+            actionSuppression.suppress(`channel:${channel.id}`);
 
             await channel.setRateLimitPerUser(
 

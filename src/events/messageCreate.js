@@ -1,5 +1,6 @@
 const AIManager = require("../ai/AIManager");
 const ContextProvider = require("../ai/ContextProvider");
+const LevelManager = require("../managers/LevelManager");
 
 module.exports = {
 
@@ -10,6 +11,9 @@ module.exports = {
         if (message.author.bot) return;
 
         if (!message.guild) return;
+
+        // Concede XP (com cooldown) independente de mencionar o bot ou não
+        await LevelManager.handleMessage(message);
 
         if (message.mentions.everyone) return;
 

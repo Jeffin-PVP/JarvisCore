@@ -6,6 +6,7 @@ const Tool = require("../../structures/Tool");
 
 const LogManager = require("../../managers/LogManager");
 const LogTypes = require("../../managers/LogTypes");
+const actionSuppression = require("../../utils/actionSuppression");
 
 
 module.exports = new class extends Tool {
@@ -121,6 +122,8 @@ module.exports = new class extends Tool {
 
         try {
 
+
+            actionSuppression.suppress(message.channel.id);
 
             const deleted =
                 await message.channel.bulkDelete(

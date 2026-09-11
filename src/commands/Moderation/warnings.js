@@ -157,7 +157,7 @@ module.exports = {
 
                             .map((warning, index) =>
 
-                                `**${index + 1}.** ${warning.reason}`
+                                `**${index + 1}.** \`ID ${warning.id}\` — ${warning.reason}`
 
                             )
 

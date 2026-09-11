@@ -4,187 +4,160 @@ const systemPrompt = require("./systemPrompt");
 
 const ToolManager = require("./ToolManager");
 
-const ToolPlanner = require("./ToolPlanner");
+const ConversationMemory = require("./ConversationMemory");
 
-const ExecutionContext =
-    require("./ExecutionContext");
+const MODEL = "openai/gpt-oss-120b";
+const MAX_TOOL_ROUNDS = 6;
 
 class AIManager {
 
     /*
     =====================================
-        CHAT NORMAL
+        CONTEXTO -> TEXTO
+    =====================================
+    */
+
+    static buildContextBlock(context) {
+
+        if (!context) return "";
+
+        return `
+Contexto atual (use para responder de forma consciente de onde você está, mas nunca repita isso literalmente para o usuário):
+
+- Servidor: ${context.server.name} (ID: ${context.server.id}, ${context.server.memberCount} membros)
+- Canal atual: #${context.channel.name} (ID: ${context.channel.id})
+- Quem está falando com você: ${context.author.displayName} (@${context.author.username}, ID: ${context.author.id})
+- Cargos de quem está falando: ${context.author.roles.length ? context.author.roles.join(", ") : "Nenhum"}
+`;
+
+    }
+
+    /*
+    =====================================
+        CHAT NORMAL (com tool-calling nativo)
     =====================================
     */
 
     static async chat({ message, question, context }) {
 
-        const plan =
-            await ToolPlanner.plan(question);
+        const channelId = message.channel.id;
 
-        // Nenhuma ferramenta necessária
-        if (!plan.actions || plan.actions.length === 0) {
+        const contextBlock = this.buildContextBlock(context);
 
-            const response =
-                await groq.chat.completions.create({
+        const messages = [
 
-                    model: "openai/gpt-oss-120b",
+            {
+                role: "system",
+                content: `${systemPrompt}\n${contextBlock}`
+            },
 
-                    temperature: 0.3,
+            // Histórico curto da conversa neste canal
+            ...ConversationMemory.get(channelId),
 
-                    messages: [
-
-                        {
-
-                            role: "system",
-
-                            content: systemPrompt
-
-                        },
-
-                        {
-
-                            role: "user",
-
-                            content: question
-
-                        }
-
-                    ]
-
-                });
-
-            return response
-                .choices[0]
-                .message
-                .content;
-
-        }
-
-        const results = [];
-
-        // Contexto da execução atual
-        const execution =
-            new ExecutionContext();
-
-        // Executa todas as ferramentas
-        for (const action of plan.actions) {
-
-            console.log("\n====== TOOL ======");
-            console.log(action.tool);
-
-            console.log("====== ARGS ======");
-            console.log(action.arguments);
-
-            // Substitui a categoria criada anteriormente
-            if (
-
-                action.arguments?.parentCategory === "__LAST_CATEGORY__"
-
-                &&
-
-                execution.has("lastCategory")
-
-            ) {
-
-                action.arguments.parentCategory =
-                    execution.get("lastCategory");
-
+            {
+                role: "user",
+                content: question
             }
 
-            const result =
-                await ToolManager.execute(
+        ];
 
-                    action.tool,
+        const tools = ToolManager.getTools();
 
-                    message,
+        let finalContent = null;
 
-                    action.arguments || {}
+        for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
 
-                );
+            const response = await groq.chat.completions.create({
 
-            console.log("====== RESULT ======");
-            console.log(result);
+                model: MODEL,
 
-            // Guarda a última categoria criada
-            if (
+                temperature: 0.3,
 
-                action.tool === "createCategory"
+                messages,
 
-                &&
+                tools,
 
-                result.success
-
-            ) {
-
-                execution.set(
-
-                    "lastCategory",
-
-                    result.id
-
-                );
-
-            }
-
-            results.push({
-
-                tool: action.tool,
-
-                result
+                tool_choice: "auto"
 
             });
 
+            const choice = response.choices[0].message;
+
+            // A IA decidiu responder direto, sem (mais) ferramentas
+            if (!choice.tool_calls || choice.tool_calls.length === 0) {
+
+                finalContent = choice.content;
+                break;
+
+            }
+
+            // Guarda a mensagem do assistente (com as tool_calls) no histórico da requisição
+            messages.push(choice);
+
+            console.log(`\n====== RODADA ${round + 1}: ${choice.tool_calls.length} ferramenta(s) ======`);
+
+            for (const toolCall of choice.tool_calls) {
+
+                const toolName = toolCall.function.name;
+
+                let args = {};
+
+                try {
+
+                    args = toolCall.function.arguments
+                        ? JSON.parse(toolCall.function.arguments)
+                        : {};
+
+                } catch (err) {
+
+                    console.error(`[AIManager] Argumentos inválidos para ${toolName}:`, toolCall.function.arguments);
+
+                }
+
+                console.log(`→ ${toolName}`, args);
+
+                const result = await ToolManager.execute(toolName, message, args);
+
+                console.log(`← resultado:`, result);
+
+                messages.push({
+                    role: "tool",
+                    tool_call_id: toolCall.id,
+                    content: JSON.stringify(result ?? { success: false, error: "Sem retorno." })
+                });
+
+            }
+
         }
 
-        // Segunda chamada da IA
-        const response =
-            await groq.chat.completions.create({
+        // Estourou o limite de rodadas sem uma resposta final — força uma última chamada sem tools
+        if (finalContent === null) {
 
-                model: "openai/gpt-oss-120b",
+            const response = await groq.chat.completions.create({
+
+                model: MODEL,
 
                 temperature: 0.2,
 
                 messages: [
-
+                    ...messages,
                     {
-
                         role: "system",
-
-                        content: `
-Você deve responder ao usuário utilizando APENAS os resultados das ferramentas.
-
-Nunca invente informações.
-
-Se alguma ferramenta falhou, explique o motivo.
-
-Se todas funcionaram, informe o sucesso de forma natural.
-`
-
-                    },
-
-                    {
-
-                        role: "user",
-
-                        content: `Pergunta:
-
-${question}
-
-Resultados:
-
-${JSON.stringify(results, null, 2)}`
-
+                        content: "Responda agora ao usuário usando apenas as informações já obtidas. Não peça para usar mais ferramentas."
                     }
-
                 ]
 
             });
 
-        return response
-            .choices[0]
-            .message
-            .content;
+            finalContent = response.choices[0].message.content;
+
+        }
+
+        // Atualiza a memória de conversa do canal
+        ConversationMemory.push(channelId, "user", question);
+        ConversationMemory.push(channelId, "assistant", finalContent);
+
+        return finalContent;
 
     }
 
@@ -199,9 +172,13 @@ ${JSON.stringify(results, null, 2)}`
         const response =
             await groq.chat.completions.create({
 
-                model: "openai/gpt-oss-120b",
+                model: MODEL,
 
                 temperature: 0.15,
+
+                response_format: {
+                    type: "json_object"
+                },
 
                 messages: [
 
@@ -281,9 +258,6 @@ Regras:
             response.choices[0]
                 .message.content
                 .trim();
-
-        console.log("===== RESPOSTA DA IA =====");
-        console.log(content);
 
         content = content
 

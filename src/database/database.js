@@ -240,6 +240,150 @@ ADD COLUMN work_at INTEGER DEFAULT NULL;
 
     `);
 
+    db.run(`
+ALTER TABLE guild_settings
+ADD COLUMN log_disabled_categories TEXT DEFAULT '';
+`, err => {
+
+        if (
+            err &&
+            !err.message.includes("duplicate column")
+        ) {
+
+            console.error(err);
+
+        }
+
+    });
+
+    /*
+    =========================
+        TICKETS
+    =========================
+    */
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS ticket_config (
+
+            guild_id TEXT PRIMARY KEY,
+
+            parent_channel_id TEXT,
+
+            support_role_id TEXT,
+
+            panel_channel_id TEXT,
+
+            next_number INTEGER DEFAULT 1,
+
+            enabled INTEGER DEFAULT 1
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS tickets (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            guild_id TEXT NOT NULL,
+
+            number INTEGER NOT NULL,
+
+            thread_id TEXT NOT NULL UNIQUE,
+
+            parent_channel_id TEXT NOT NULL,
+
+            user_id TEXT NOT NULL,
+
+            status TEXT NOT NULL DEFAULT 'open',
+
+            claimed_by TEXT,
+
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+            closed_at DATETIME,
+
+            closed_by TEXT
+
+        );
+
+    `);
+
+    /*
+    =========================
+        AUTO-ROLE
+    =========================
+    */
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS autorole_join (
+
+            guild_id TEXT PRIMARY KEY,
+
+            role_ids TEXT DEFAULT ''
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS autorole_selfroles (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            guild_id TEXT NOT NULL,
+
+            role_id TEXT NOT NULL,
+
+            label TEXT NOT NULL,
+
+            emoji TEXT,
+
+            UNIQUE(guild_id, role_id)
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS autorole_levels (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            guild_id TEXT NOT NULL,
+
+            level INTEGER NOT NULL,
+
+            role_id TEXT NOT NULL,
+
+            UNIQUE(guild_id, level)
+
+        );
+
+    `);
+
+    db.run(`
+ALTER TABLE guild_settings
+ADD COLUMN levelup_enabled INTEGER DEFAULT 1;
+`, err => {
+
+        if (
+            err &&
+            !err.message.includes("duplicate column")
+        ) {
+
+            console.error(err);
+
+        }
+
+    });
+
 });
 
 // Helpers
@@ -318,17 +462,3 @@ module.exports = {
     all
 
 };
-
-db.all("PRAGMA table_info(economy_users);", (err, rows) => {
-
-    if (err) {
-
-        console.error(err);
-
-    } else {
-
-        console.table(rows);
-
-    }
-
-});

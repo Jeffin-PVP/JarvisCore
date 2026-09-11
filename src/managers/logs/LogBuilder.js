@@ -296,9 +296,551 @@ class LogBuilder {
 
                 break;
 
-            default:
+            // ==========================
+            // ENTROU NO SERVIDOR
+            // ==========================
 
-                return null;
+            case LogTypes.MEMBER_JOIN:
+
+                embed
+                    .setColor(LogColors.MEMBER_JOIN)
+                    .setTitle(`${LogIcons.MEMBER_JOIN} Membro Entrou`)
+                    .setThumbnail(data.target.user?.displayAvatarURL?.() ?? null)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: `${targetTag}\n\`${data.target.id}\``
+                        },
+                        {
+                            name: "📅 Conta criada em",
+                            value: `<t:${Math.floor(data.target.user.createdTimestamp / 1000)}:R>`
+                        },
+                        {
+                            name: "👥 Total de membros",
+                            value: `${data.extra?.memberCount ?? "?"}`
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // SAIU DO SERVIDOR
+            // ==========================
+
+            case LogTypes.MEMBER_LEAVE:
+
+                embed
+                    .setColor(LogColors.MEMBER_LEAVE)
+                    .setTitle(`${LogIcons.MEMBER_LEAVE} Membro Saiu`)
+                    .setThumbnail(data.target.user?.displayAvatarURL?.() ?? null)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: `${targetTag}\n\`${data.target.id}\``
+                        },
+                        {
+                            name: "📥 Estava no servidor desde",
+                            value: data.extra?.joinedTimestamp
+                                ? `<t:${Math.floor(data.extra.joinedTimestamp / 1000)}:R>`
+                                : "Desconhecido"
+                        },
+                        {
+                            name: "🎭 Cargos",
+                            value: data.extra?.roles?.length
+                                ? data.extra.roles.join(", ")
+                                : "Nenhum"
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // BOOST
+            // ==========================
+
+            case LogTypes.MEMBER_BOOST:
+
+                embed
+                    .setColor(LogColors.MEMBER_BOOST)
+                    .setTitle(`${LogIcons.MEMBER_BOOST} Novo Boost`)
+                    .setDescription(`${targetTag} impulsionou o servidor! 🚀`);
+
+                break;
+
+            case LogTypes.MEMBER_UNBOOST:
+
+                embed
+                    .setColor(LogColors.MEMBER_UNBOOST)
+                    .setTitle(`${LogIcons.MEMBER_UNBOOST} Boost Removido`)
+                    .setDescription(`${targetTag} não está mais impulsionando o servidor.`);
+
+                break;
+
+            // ==========================
+            // APELIDO
+            // ==========================
+
+            case LogTypes.MEMBER_NICKNAME:
+
+                embed
+                    .setColor(LogColors.MEMBER_NICKNAME)
+                    .setTitle(`${LogIcons.MEMBER_NICKNAME} Apelido Alterado`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "⬅️ Antes",
+                            value: data.extra?.before || "*Nenhum*"
+                        },
+                        {
+                            name: "➡️ Depois",
+                            value: data.extra?.after || "*Nenhum*"
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // MENSAGEM APAGADA
+            // ==========================
+
+            case LogTypes.MESSAGE_DELETE:
+
+                embed
+                    .setColor(LogColors.MESSAGE_DELETE)
+                    .setTitle(`${LogIcons.MESSAGE_DELETE} Mensagem Apagada`)
+                    .addFields(
+                        {
+                            name: "👤 Autor",
+                            value: targetTag
+                        },
+                        {
+                            name: "📺 Canal",
+                            value: `${data.channel}`
+                        },
+                        {
+                            name: "📝 Conteúdo",
+                            value: (data.extra?.content || "*Sem conteúdo (anexo, embed, etc.)*")
+                                .slice(0, 1000)
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // MENSAGEM EDITADA
+            // ==========================
+
+            case LogTypes.MESSAGE_EDIT:
+
+                embed
+                    .setColor(LogColors.MESSAGE_EDIT)
+                    .setTitle(`${LogIcons.MESSAGE_EDIT} Mensagem Editada`)
+                    .addFields(
+                        {
+                            name: "👤 Autor",
+                            value: targetTag
+                        },
+                        {
+                            name: "📺 Canal",
+                            value: `${data.channel}`
+                        },
+                        {
+                            name: "⬅️ Antes",
+                            value: (data.extra?.before || "*Vazio*").slice(0, 500)
+                        },
+                        {
+                            name: "➡️ Depois",
+                            value: (data.extra?.after || "*Vazio*").slice(0, 500)
+                        }
+                    );
+
+                if (data.extra?.url) {
+                    embed.setURL(data.extra.url);
+                }
+
+                break;
+
+            // ==========================
+            // LIMPEZA EM MASSA (BULK DELETE)
+            // ==========================
+
+            case LogTypes.MESSAGE_BULK_DELETE:
+
+                embed
+                    .setColor(LogColors.MESSAGE_BULK_DELETE)
+                    .setTitle(`${LogIcons.MESSAGE_BULK_DELETE} Mensagens Apagadas em Massa`)
+                    .addFields(
+                        {
+                            name: "📺 Canal",
+                            value: `${data.channel}`
+                        },
+                        {
+                            name: "🧹 Quantidade",
+                            value: `${data.extra?.amount ?? "?"}`
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // CANAL CRIADO / APAGADO / ATUALIZADO
+            // ==========================
+
+            case LogTypes.CHANNEL_CREATE:
+
+                embed
+                    .setColor(LogColors.CHANNEL_CREATE)
+                    .setTitle(`${LogIcons.CHANNEL_CREATE} Canal Criado`)
+                    .addFields(
+                        {
+                            name: "📁 Canal",
+                            value: `${data.channel?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "🛡️ Responsável",
+                            value: executorTag
+                        }
+                    );
+
+                break;
+
+            case LogTypes.CHANNEL_DELETE:
+
+                embed
+                    .setColor(LogColors.CHANNEL_DELETE)
+                    .setTitle(`${LogIcons.CHANNEL_DELETE} Canal Apagado`)
+                    .addFields(
+                        {
+                            name: "📁 Canal",
+                            value: `${data.channel?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "🛡️ Responsável",
+                            value: executorTag
+                        }
+                    );
+
+                break;
+
+            case LogTypes.CHANNEL_UPDATE:
+
+                embed
+                    .setColor(LogColors.CHANNEL_UPDATE)
+                    .setTitle(`${LogIcons.CHANNEL_UPDATE} Canal Atualizado`)
+                    .addFields(
+                        {
+                            name: "📁 Canal",
+                            value: `${data.channel?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "✏️ Alterações",
+                            value: data.extra?.changes?.length
+                                ? data.extra.changes.join("\n")
+                                : "Não especificado"
+                        },
+                        {
+                            name: "🛡️ Responsável",
+                            value: executorTag
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // CARGOS
+            // ==========================
+
+            case LogTypes.ROLE_CREATE:
+
+                embed
+                    .setColor(LogColors.ROLE_CREATE)
+                    .setTitle(`${LogIcons.ROLE_CREATE} Cargo Criado`)
+                    .addFields(
+                        {
+                            name: "🎭 Cargo",
+                            value: `${data.extra?.role?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "🛡️ Responsável",
+                            value: executorTag
+                        }
+                    );
+
+                break;
+
+            case LogTypes.ROLE_DELETE:
+
+                embed
+                    .setColor(LogColors.ROLE_DELETE)
+                    .setTitle(`${LogIcons.ROLE_DELETE} Cargo Apagado`)
+                    .addFields(
+                        {
+                            name: "🎭 Cargo",
+                            value: `${data.extra?.role?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "🛡️ Responsável",
+                            value: executorTag
+                        }
+                    );
+
+                break;
+
+            case LogTypes.ROLE_UPDATE:
+
+                embed
+                    .setColor(LogColors.ROLE_UPDATE)
+                    .setTitle(`${LogIcons.ROLE_UPDATE} Cargo Atualizado`)
+                    .addFields(
+                        {
+                            name: "🎭 Cargo",
+                            value: `${data.extra?.role?.name ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "✏️ Alterações",
+                            value: data.extra?.changes?.length
+                                ? data.extra.changes.join("\n")
+                                : "Não especificado"
+                        }
+                    );
+
+                break;
+
+            case LogTypes.ROLE_ADD:
+
+                embed
+                    .setColor(LogColors.ROLE_ADD)
+                    .setTitle(`${LogIcons.ROLE_ADD} Cargo Adicionado`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🎭 Cargo",
+                            value: `${data.extra?.role?.name ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.ROLE_REMOVE:
+
+                embed
+                    .setColor(LogColors.ROLE_REMOVE)
+                    .setTitle(`${LogIcons.ROLE_REMOVE} Cargo Removido`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🎭 Cargo",
+                            value: `${data.extra?.role?.name ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // VOZ
+            // ==========================
+
+            case LogTypes.VOICE_JOIN:
+
+                embed
+                    .setColor(LogColors.VOICE_JOIN)
+                    .setTitle(`${LogIcons.VOICE_JOIN} Entrou em Canal de Voz`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🎙️ Canal",
+                            value: `${data.extra?.channel ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.VOICE_LEAVE:
+
+                embed
+                    .setColor(LogColors.VOICE_LEAVE)
+                    .setTitle(`${LogIcons.VOICE_LEAVE} Saiu de Canal de Voz`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🎙️ Canal",
+                            value: `${data.extra?.channel ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.VOICE_MOVE:
+
+                embed
+                    .setColor(LogColors.VOICE_MOVE)
+                    .setTitle(`${LogIcons.VOICE_MOVE} Mudou de Canal de Voz`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "⬅️ De",
+                            value: `${data.extra?.from ?? "Desconhecido"}`
+                        },
+                        {
+                            name: "➡️ Para",
+                            value: `${data.extra?.to ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // TICKETS
+            // ==========================
+
+            case LogTypes.TICKET_CREATE:
+
+                embed
+                    .setColor(LogColors.TICKET_CREATE)
+                    .setTitle(`${LogIcons.TICKET_CREATE} Ticket Aberto`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🎫 Ticket",
+                            value: `#${data.extra?.number ?? "?"} — ${data.channel ?? "Desconhecido"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.TICKET_CLOSE:
+
+                embed
+                    .setColor(LogColors.TICKET_CLOSE)
+                    .setTitle(`${LogIcons.TICKET_CLOSE} Ticket Fechado`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🛡️ Fechado por",
+                            value: executorTag
+                        },
+                        {
+                            name: "🎫 Ticket",
+                            value: `#${data.extra?.number ?? "?"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.TICKET_REOPEN:
+
+                embed
+                    .setColor(LogColors.TICKET_REOPEN)
+                    .setTitle(`${LogIcons.TICKET_REOPEN} Ticket Reaberto`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🛡️ Reaberto por",
+                            value: executorTag
+                        },
+                        {
+                            name: "🎫 Ticket",
+                            value: `#${data.extra?.number ?? "?"}`
+                        }
+                    );
+
+                break;
+
+            case LogTypes.TICKET_DELETE:
+
+                embed
+                    .setColor(LogColors.TICKET_DELETE)
+                    .setTitle(`${LogIcons.TICKET_DELETE} Ticket Deletado`)
+                    .addFields(
+                        {
+                            name: "👤 Usuário",
+                            value: targetTag
+                        },
+                        {
+                            name: "🛡️ Deletado por",
+                            value: executorTag
+                        },
+                        {
+                            name: "🎫 Ticket",
+                            value: `#${data.extra?.number ?? "?"}`
+                        }
+                    );
+
+                break;
+
+            // ==========================
+            // FALLBACK GENÉRICO
+            //
+            // Garante que nenhum log seja perdido
+            // silenciosamente caso um tipo ainda não
+            // tenha um builder específico.
+            // ==========================
+
+            default: {
+
+                const icon = LogIcons[data.type] ?? "📋";
+                const color = LogColors[data.type] ?? "#8E8E93";
+
+                embed
+                    .setColor(color)
+                    .setTitle(`${icon} ${data.type}`);
+
+                if (data.target) {
+                    embed.addFields({
+                        name: "👤 Alvo",
+                        value: targetTag
+                    });
+                }
+
+                if (data.executor) {
+                    embed.addFields({
+                        name: "🛡️ Responsável",
+                        value: executorTag
+                    });
+                }
+
+                if (data.reason) {
+                    embed.addFields({
+                        name: "📝 Motivo",
+                        value: String(data.reason)
+                    });
+                }
+
+                if (data.extra) {
+                    embed.addFields({
+                        name: "ℹ️ Detalhes",
+                        value: `\`\`\`json\n${JSON.stringify(data.extra, null, 2).slice(0, 900)}\n\`\`\``
+                    });
+                }
+
+            }
 
         }
 

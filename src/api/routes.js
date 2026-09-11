@@ -11,9 +11,22 @@ module.exports = (client) => {
 
             online: client.isReady(),
 
+            bot: client.user ? client.user.tag : "Inicializando...",
+
             ping: client.ws.ping,
 
-            servers: client.guilds.cache.size
+            servers: client.guilds.cache.size,
+
+            users: client.guilds.cache.reduce(
+                (acc, guild) => acc + guild.memberCount,
+                0
+            ),
+
+            uptime: process.uptime(),
+
+            memory: process.memoryUsage(),
+
+            node: process.version
 
         });
 

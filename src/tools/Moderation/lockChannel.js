@@ -6,6 +6,7 @@ const Tool = require("../../structures/Tool");
 
 const LogManager = require("../../managers/LogManager");
 const LogTypes = require("../../managers/LogTypes");
+const actionSuppression = require("../../utils/actionSuppression");
 
 
 module.exports = new class extends Tool {
@@ -116,6 +117,8 @@ module.exports = new class extends Tool {
 
         try {
 
+
+            actionSuppression.suppress(`channel:${channel.id}`);
 
             await channel.permissionOverwrites.edit(
 

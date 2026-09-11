@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
-const express = require("express");
 
 const ApiServer =
     require("./src/api/server");
@@ -18,8 +17,6 @@ const {
 const commands =
     require("./src/commands");
 
-const app = express();
-
 const client = new Client({
 
     intents: [
@@ -30,7 +27,9 @@ const client = new Client({
 
         GatewayIntentBits.GuildMessages,
 
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+
+        GatewayIntentBits.GuildVoiceStates
 
     ],
 
@@ -64,92 +63,6 @@ for (const command of Object.values(commands)) {
     );
 
 }
-
-
-// ===============================
-// EXPRESS
-// ===============================
-
-const PORT =
-    process.env.PORT || 3000;
-
-app.get("/", (req, res) => {
-
-    res.status(200).json({
-
-        status: "online",
-
-        bot:
-            client.user
-                ? client.user.tag
-                : "Inicializando...",
-
-        uptime:
-            process.uptime(),
-
-        guilds:
-            client.guilds.cache.size,
-
-        users:
-            client.guilds.cache.reduce(
-
-                (acc, guild) =>
-
-                    acc + guild.memberCount,
-
-                0
-
-            ),
-
-        ping:
-            client.ws.ping
-
-    });
-
-});
-
-app.get("/status", (req, res) => {
-
-    res.json({
-
-        online:
-            client.isReady(),
-
-        ping:
-            client.ws.ping,
-
-        memory:
-            process.memoryUsage(),
-
-        uptime:
-            process.uptime(),
-
-        node:
-            process.version
-
-    });
-
-});
-
-app.listen(PORT, () => {
-
-    console.log(
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    );
-
-    console.log(
-        "🌐 Express iniciado"
-    );
-
-    console.log(
-        `📡 Porta: ${PORT}`
-    );
-
-    console.log(
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    );
-
-});
 
 
 // ===============================
@@ -235,7 +148,7 @@ client.once(
             new ApiServer(client);
 
 
-        api.start(3000);
+        api.start(process.env.PORT || 3000);
 
         console.log(
             `🆔 ID: ${client.user.id}`

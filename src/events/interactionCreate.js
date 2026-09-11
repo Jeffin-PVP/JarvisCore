@@ -17,6 +17,18 @@ const embedModals =
 const embedChannel =
     require("../interactions/embed/channelHandler");
 
+const ticketButtons =
+    require("../interactions/tickets/buttonHandler");
+
+const autoroleButtons =
+    require("../interactions/autorole/buttonHandler");
+
+const criarServidorModal =
+    require("../interactions/criarServidor/modalHandler");
+
+const criarServidorButtons =
+    require("../interactions/criarServidor/buttonHandler");
+
 module.exports = {
 
     name: Events.InteractionCreate,
@@ -39,6 +51,12 @@ module.exports = {
 
                 }
 
+                if (interaction.customId === "criarservidor_modal") {
+
+                    return criarServidorModal.execute(interaction);
+
+                }
+
                 return modalSubmit.execute(interaction);
 
             }
@@ -50,6 +68,24 @@ module.exports = {
             */
 
             if (interaction.isButton()) {
+
+                if (interaction.customId.startsWith("ticket_")) {
+
+                    return ticketButtons.execute(interaction);
+
+                }
+
+                if (interaction.customId.startsWith("selfrole_")) {
+
+                    return autoroleButtons.execute(interaction);
+
+                }
+
+                if (interaction.customId.startsWith("criarservidor_")) {
+
+                    return criarServidorButtons.execute(interaction);
+
+                }
 
                 return embedButtons.execute(interaction);
 

@@ -4,6 +4,9 @@ class Tool {
         name,
         description,
         category,
+        guildOnly = false,
+        ownerOnly = false,
+        permissions = [],
         parameters = {
             type: "object",
             properties: {},
@@ -14,6 +17,9 @@ class Tool {
         this.name = name;
         this.description = description;
         this.category = category;
+        this.guildOnly = guildOnly;
+        this.ownerOnly = ownerOnly;
+        this.permissions = permissions;
         this.parameters = parameters;
 
     }
