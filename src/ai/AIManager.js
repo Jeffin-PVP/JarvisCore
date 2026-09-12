@@ -235,7 +235,7 @@ Regras:
 
 - Nunca escreva markdown.
 - Nunca utilize \`\`\`json.
-- Nunca explique nada sobre os métodos que você está utilizando pra responder o usuério.
+- Nunca explique nada.
 - Apenas JSON válido.
 - Se um campo não for necessário, deixe vazio.
 `

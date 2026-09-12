@@ -6,6 +6,12 @@ const path = require("path");
 const ApiServer =
     require("./src/api/server");
 
+const GiveawayManager =
+    require("./src/managers/GiveawayManager");
+
+const PresenceManager =
+    require("./src/managers/PresenceManager");
+
 const {
     Client,
     GatewayIntentBits,
@@ -149,6 +155,10 @@ client.once(
 
 
         api.start(process.env.PORT || 3000);
+
+        GiveawayManager.start(client);
+
+        PresenceManager.start(client);
 
         console.log(
             `🆔 ID: ${client.user.id}`

@@ -29,6 +29,9 @@ const criarServidorModal =
 const criarServidorButtons =
     require("../interactions/criarServidor/buttonHandler");
 
+const giveawayButtons =
+    require("../interactions/giveaway/buttonHandler");
+
 module.exports = {
 
     name: Events.InteractionCreate,
@@ -84,6 +87,12 @@ module.exports = {
                 if (interaction.customId.startsWith("criarservidor_")) {
 
                     return criarServidorButtons.execute(interaction);
+
+                }
+
+                if (interaction.customId.startsWith("giveaway_")) {
+
+                    return giveawayButtons.execute(interaction);
 
                 }
 

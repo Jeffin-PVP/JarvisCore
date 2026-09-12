@@ -1,53 +1,9 @@
 const {
     Events,
-    EmbedBuilder,
-    ChannelType,
-    PermissionFlagsBits
+    EmbedBuilder
 } = require("discord.js");
 
-/*
-=========================
-    ENCONTRA O MELHOR CANAL
-=========================
-*/
-
-function encontrarCanalDeAnuncio(guild, botMember) {
-
-    const permissoesNecessarias = [
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.EmbedLinks
-    ];
-
-    const podeUsar = (channel) => {
-
-        if (channel.type !== ChannelType.GuildText) return false;
-
-        const permissoes = channel.permissionsFor(botMember);
-
-        return !!permissoes && permissoes.has(permissoesNecessarias);
-
-    };
-
-    // Prioridade 1: canal de sistema do servidor (onde o Discord manda "fulano entrou")
-    if (guild.systemChannel && podeUsar(guild.systemChannel)) {
-
-        return guild.systemChannel;
-
-    }
-
-    // Prioridade 2: primeiro canal de texto disponível, na ordem de posição do servidor
-    const primeiroDisponivel = guild.channels.cache
-
-        .filter(podeUsar)
-
-        .sort((a, b) => a.rawPosition - b.rawPosition)
-
-        .first();
-
-    return primeiroDisponivel || null;
-
-}
+const { encontrarCanalDeAnuncio } = require("../utils/findAnnounceChannel");
 
 /*
 =========================
@@ -70,7 +26,7 @@ function buildEmbedApresentacao(guild) {
 
         .setDescription(
             "Obrigado por me adicionar! Eu sou o **JarvisCore**, um assistente inteligente para Discord " +
-            "criado por **<JeffinPVP/>**.\n\n" +
+            "criado por **JeffinPVP**.\n\n" +
             "Converse comigo mencionando `@JarvisCore` em qualquer canal ou explore meus recursos:"
         )
 
@@ -119,11 +75,6 @@ function buildEmbedApresentacao(guild) {
             value: "Use `/config status` para ver e ajustar minhas configurações neste servidor."
         })
 
-        .addFields({
-            name: "💬 Meu servidor de suporte",
-            value: "Entre no meu servidor de suporte com esse link: `https://discord.gg/Kk4AbujYTF`."
-        })
-
         .setThumbnail(guild.client.user.displayAvatarURL())
 
         .setFooter({ text: "JarvisCore • Desenvolvido por JeffinPVP" })
@@ -142,8 +93,7 @@ module.exports = {
 
         try {
 
-            const botMember = guild.members.me || await guild.members.fetchMe();
-            const canal = encontrarCanalDeAnuncio(guild, botMember);
+            const canal = await encontrarCanalDeAnuncio(guild);
 
             if (!canal) {
 

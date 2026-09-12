@@ -1,7 +1,10 @@
+const path = require("path");
+
 const express = require("express");
 const cors = require("cors");
 
 const routes = require("./routes");
+const dashboardRoutes = require("./dashboardRoutes");
 
 
 class ApiServer {
@@ -26,6 +29,17 @@ class ApiServer {
             routes(client)
         );
 
+        this.app.use(
+            "/api/dashboard",
+            dashboardRoutes(client)
+        );
+
+        // Painel do dono (arquivos estáticos servidos em /dashboard)
+        this.app.use(
+            "/dashboard",
+            express.static(path.join(__dirname, "..", "..", "public", "dashboard"))
+        );
+
     }
 
 
@@ -35,6 +49,10 @@ class ApiServer {
 
             console.log(
                 `🌐 API online na porta ${port}`
+            );
+
+            console.log(
+                `🖥️ Dashboard em http://localhost:${port}/dashboard`
             );
 
         });
