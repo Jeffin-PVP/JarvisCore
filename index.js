@@ -123,6 +123,19 @@ if (fs.existsSync(eventsPath)) {
 
 
 // ===============================
+// API / DASHBOARD
+// ===============================
+// Sobe ANTES do login no Discord: se o bot demorar pra conectar (ou o
+// login falhar), a plataforma de hospedagem ainda enxerga algo respondendo
+// na porta — em vez de reportar o app inteiro como fora do ar.
+
+const api =
+    new ApiServer(client);
+
+api.start(process.env.PORT || 3000);
+
+
+// ===============================
 // READY
 // ===============================
 
@@ -149,12 +162,6 @@ client.once(
         console.log(
             `👤 Logado como: ${client.user.tag}`
         );
-
-        const api =
-            new ApiServer(client);
-
-
-        api.start(process.env.PORT || 3000);
 
         GiveawayManager.start(client);
 
@@ -184,6 +191,17 @@ client.once(
 
 );
 
+client.on(Events.Error, (error) => {
+
+    console.error("❌ Erro no client do Discord:", error);
+
+});
+
 client.login(
     process.env.TOKEN
-);
+).catch((error) => {
+
+    console.error("❌ Falha ao logar no Discord (verifique TOKEN e intents no Developer Portal):", error.message);
+    console.error("🌐 O dashboard continua no ar mesmo assim, em modo 'bot offline'.");
+
+});
