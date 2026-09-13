@@ -194,7 +194,25 @@ module.exports = {
 
     BOT_STOP: "BOT_STOP",
 
-    DATABASE_ERROR: "DATABASE_ERROR"
+    DATABASE_ERROR: "DATABASE_ERROR",
+
+
+
+
+    // =========================
+    // SORTEIOS
+    // =========================
+
+
+    GIVEAWAY_CREATE: "GIVEAWAY_CREATE",
+
+    GIVEAWAY_END: "GIVEAWAY_END",
+
+    GIVEAWAY_CANCEL: "GIVEAWAY_CANCEL",
+
+    GIVEAWAY_REROLL: "GIVEAWAY_REROLL",
+
+    GIVEAWAY_EDIT: "GIVEAWAY_EDIT"
 
 
 };

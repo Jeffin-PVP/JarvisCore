@@ -152,6 +152,19 @@ const CATEGORIES = {
             LogTypes.BOT_STOP,
             LogTypes.DATABASE_ERROR
         ]
+    },
+
+    sorteios: {
+        label: "Sorteios",
+        emoji: "🎉",
+        defaultEnabled: true,
+        types: [
+            LogTypes.GIVEAWAY_CREATE,
+            LogTypes.GIVEAWAY_END,
+            LogTypes.GIVEAWAY_CANCEL,
+            LogTypes.GIVEAWAY_REROLL,
+            LogTypes.GIVEAWAY_EDIT
+        ]
     }
 
 };

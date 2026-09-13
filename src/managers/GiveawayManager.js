@@ -6,6 +6,8 @@ const {
 } = require("discord.js");
 
 const GiveawayRepository = require("../database/repositories/GiveawayRepository");
+const LogManager = require("./LogManager");
+const LogTypes = require("./LogTypes");
 
 const CHECK_INTERVAL_MS = 10 * 1000; // checa sorteios pra encerrar a cada 10s
 
@@ -77,20 +79,67 @@ function formatarDuracao(ms) {
 =========================
 */
 
-function sortearVencedores(participantes, quantidade) {
+function sortearVencedores(pool, quantidade) {
 
-    const pool = [...participantes];
+    let restante = [...pool];
     const vencedores = [];
 
-    while (pool.length && vencedores.length < quantidade) {
+    while (restante.length && vencedores.length < quantidade) {
 
-        const index = Math.floor(Math.random() * pool.length);
-        vencedores.push(pool[index]);
-        pool.splice(index, 1);
+        const index = Math.floor(Math.random() * restante.length);
+        const ganhador = restante[index];
+
+        vencedores.push(ganhador);
+
+        // remove TODAS as entradas desse ganhador (multiplicador gera duplicatas no pool)
+        restante = restante.filter(id => id !== ganhador);
 
     }
 
     return vencedores;
+
+}
+
+const MULTIPLICADOR_MAXIMO = 10;
+
+// Constrói o "pool" de sorteio duplicando o ID de quem tem cargo com
+// multiplicador de entradas (ex: booster vale 2 entradas). Quem já saiu
+// do servidor é ignorado (não concorre mais).
+async function construirPoolPonderado(guild, participantes, multiplicadores) {
+
+    if (!multiplicadores.length) return [...participantes];
+
+    const pool = [];
+
+    for (const userId of participantes) {
+
+        let multiplicador = 1;
+
+        try {
+
+            const member = await guild.members.fetch(userId);
+
+            for (const m of multiplicadores) {
+
+                if (member.roles.cache.has(m.role_id)) {
+
+                    multiplicador = Math.max(multiplicador, m.multiplier);
+
+                }
+
+            }
+
+        } catch {
+            continue; // saiu do servidor
+        }
+
+        multiplicador = Math.min(multiplicador, MULTIPLICADOR_MAXIMO);
+
+        for (let i = 0; i < multiplicador; i++) pool.push(userId);
+
+    }
+
+    return pool;
 
 }
 
@@ -180,7 +229,6 @@ async function encerrarSorteio(client, giveaway) {
     await GiveawayRepository.setStatus(giveaway.id, "ended");
 
     const participantes = await GiveawayRepository.listEntries(giveaway.id);
-    const vencedores = sortearVencedores(participantes, giveaway.winners_count);
 
     let canal = null;
 
@@ -191,6 +239,10 @@ async function encerrarSorteio(client, giveaway) {
     } catch {
         canal = null;
     }
+
+    const multiplicadores = canal ? await GiveawayRepository.listMultipliers(giveaway.guild_id) : [];
+    const pool = canal ? await construirPoolPonderado(canal.guild, participantes, multiplicadores) : participantes;
+    const vencedores = sortearVencedores(pool, giveaway.winners_count);
 
     const embedFinal = buildEmbedEncerrado(giveaway, vencedores, participantes.length);
 
@@ -227,6 +279,12 @@ async function encerrarSorteio(client, giveaway) {
 
         }
 
+        await LogManager.send({
+            type: LogTypes.GIVEAWAY_END,
+            guild: canal.guild,
+            extra: { prize: giveaway.prize, winners: vencedores, participants: participantes.length }
+        }).catch(() => {});
+
     }
 
     return { vencedores, participantes };
@@ -239,7 +297,7 @@ async function encerrarSorteio(client, giveaway) {
 =========================
 */
 
-async function rerollSorteio(client, giveawayId, quantidade) {
+async function rerollSorteio(client, giveawayId, quantidade, executor) {
 
     const giveaway = await GiveawayRepository.get(giveawayId);
 
@@ -263,8 +321,6 @@ async function rerollSorteio(client, giveawayId, quantidade) {
 
     }
 
-    const vencedores = sortearVencedores(participantes, quantidade || giveaway.winners_count);
-
     let canal = null;
 
     try {
@@ -273,10 +329,21 @@ async function rerollSorteio(client, giveawayId, quantidade) {
         canal = null;
     }
 
+    const multiplicadores = canal ? await GiveawayRepository.listMultipliers(giveaway.guild_id) : [];
+    const pool = canal ? await construirPoolPonderado(canal.guild, participantes, multiplicadores) : participantes;
+    const vencedores = sortearVencedores(pool, quantidade || giveaway.winners_count);
+
     if (canal) {
 
         await canal.send({
             content: `🔁 Novo sorteio para **${giveaway.prize}**! Parabéns ${vencedores.map(id => `<@${id}>`).join(", ")}!`
+        }).catch(() => {});
+
+        await LogManager.send({
+            type: LogTypes.GIVEAWAY_REROLL,
+            guild: canal.guild,
+            executor: executor || client.user,
+            extra: { prize: giveaway.prize, winners: vencedores }
         }).catch(() => {});
 
     }
@@ -329,5 +396,7 @@ module.exports = {
     buildEmbedEncerrado,
     encerrarSorteio,
     rerollSorteio,
+    construirPoolPonderado,
+    MULTIPLICADOR_MAXIMO,
     start
 };

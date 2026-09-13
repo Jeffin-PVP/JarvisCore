@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 
 const { encontrarCanalDeAnuncio } = require("../utils/findAnnounceChannel");
+const BroadcastRepository = require("../database/repositories/BroadcastRepository");
 
 function buildEmbedComunicado({ title, description, color, footer }) {
 
@@ -18,7 +19,7 @@ function buildEmbedComunicado({ title, description, color, footer }) {
 
 // Manda o comunicado em todos os servidores em que o bot está.
 // Retorna um relatório com quantos deram certo/errado (e por quê).
-async function broadcast(client, { title, description, color, footer }) {
+async function broadcast(client, { title, description, color, footer, kind = "broadcast" }) {
 
     const embed = buildEmbedComunicado({ title, description, color, footer });
 
@@ -51,6 +52,15 @@ async function broadcast(client, { title, description, color, footer }) {
 
     }
 
+    await BroadcastRepository.log({
+        title,
+        description,
+        color,
+        kind,
+        sentCount: resultados.enviados,
+        failedCount: resultados.falhas.length
+    }).catch(() => {});
+
     return resultados;
 
 }
@@ -66,7 +76,8 @@ async function restart(client, { title, description, color, footer, delayMs = 40
         title: title || "🔧 Reiniciando para atualização",
         description: description || "O bot vai reiniciar em instantes. Voltamos logo!",
         color: color || "#FEE75C",
-        footer
+        footer,
+        kind: "restart"
     });
 
     setTimeout(() => {

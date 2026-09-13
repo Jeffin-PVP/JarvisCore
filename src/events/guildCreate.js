@@ -4,6 +4,7 @@ const {
 } = require("discord.js");
 
 const { encontrarCanalDeAnuncio } = require("../utils/findAnnounceChannel");
+const BannedGuildRepository = require("../database/repositories/BannedGuildRepository");
 
 /*
 =========================
@@ -90,6 +91,17 @@ module.exports = {
     async execute(guild) {
 
         console.log(`✔ Entrei em um novo servidor: ${guild.name} (${guild.id})`);
+
+        // Servidor banido pelo dono via dashboard: sai na hora, sem anunciar nada
+        const banido = await BannedGuildRepository.isBanned(guild.id).catch(() => false);
+
+        if (banido) {
+
+            console.log(`🚫 Servidor "${guild.name}" está banido — saindo automaticamente.`);
+            await guild.leave().catch(() => {});
+            return;
+
+        }
 
         try {
 

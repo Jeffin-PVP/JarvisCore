@@ -4,6 +4,9 @@ const { login, logout, requireAuth } = require("./dashboardAuth");
 const SettingsRepository = require("../database/repositories/SettingsRepository");
 const PresenceManager = require("../managers/PresenceManager");
 const BroadcastManager = require("../managers/BroadcastManager");
+const BroadcastRepository = require("../database/repositories/BroadcastRepository");
+const BannedGuildRepository = require("../database/repositories/BannedGuildRepository");
+const StatsHistoryRepository = require("../database/repositories/StatsHistoryRepository");
 const { encontrarCanalDeAnuncio } = require("../utils/findAnnounceChannel");
 
 module.exports = (client) => {
@@ -88,6 +91,50 @@ module.exports = (client) => {
             res.status(500).json({ error: `Não foi possível sair: ${error.message}` });
 
         }
+
+    });
+
+    /*
+    =========================
+        SERVIDORES BANIDOS
+    =========================
+    */
+
+    router.get("/guilds/banned", async (req, res) => {
+
+        const banidos = await BannedGuildRepository.list();
+
+        res.json({ banned: banidos });
+
+    });
+
+    router.post("/guilds/:id/ban", async (req, res) => {
+
+        const { reason } = req.body || {};
+        const guild = client.guilds.cache.get(req.params.id);
+        const nome = guild?.name || `Servidor ${req.params.id}`;
+
+        try {
+
+            await BannedGuildRepository.ban(req.params.id, nome, reason || null);
+
+            if (guild) await guild.leave().catch(() => {});
+
+            res.json({ ok: true, message: `"${nome}" banido. O bot sai automaticamente se for adicionado de novo.` });
+
+        } catch (error) {
+
+            res.status(500).json({ error: `Não foi possível banir: ${error.message}` });
+
+        }
+
+    });
+
+    router.post("/guilds/banned/:id/unban", async (req, res) => {
+
+        await BannedGuildRepository.unban(req.params.id);
+
+        res.json({ ok: true });
 
     });
 
@@ -202,6 +249,28 @@ module.exports = (client) => {
         });
 
         res.json(resultado);
+
+    });
+
+    router.get("/broadcast/history", async (req, res) => {
+
+        const historico = await BroadcastRepository.listRecent(20);
+
+        res.json({ history: historico });
+
+    });
+
+    /*
+    =========================
+        HISTÓRICO DE ESTATÍSTICAS
+    =========================
+    */
+
+    router.get("/stats-history", async (req, res) => {
+
+        const historico = await StatsHistoryRepository.listLast(30);
+
+        res.json({ history: historico.reverse() });
 
     });
 

@@ -184,6 +184,17 @@ module.exports = {
 
     BOT_STOP: "#FF3B30",
 
-    DATABASE_ERROR: "#FF3B30"
+    DATABASE_ERROR: "#FF3B30",
+
+
+    /*
+    =========================
+        SORTEIOS
+    =========================
+    */
+
+    GIVEAWAY: "#57F287",
+
+    GIVEAWAY_CANCEL: "#ED4245"
 
 };

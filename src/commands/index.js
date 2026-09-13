@@ -3,7 +3,21 @@ const path = require("path");
 
 const commands = {};
 
-function load(dir) {
+const CATEGORY_LABELS = {
+    Autorole: "🎭 Cargos automáticos",
+    Boasvindas: "👋 Boas-vindas",
+    Economy: "💰 Economia",
+    Games: "🎮 Jogos",
+    Moderation: "🛡️ Moderação",
+    Servidor: "🏗️ Servidor",
+    Sorteios: "🎉 Sorteios",
+    Tickets: "🎫 Tickets",
+    Utility: "🔧 Utilidade",
+    configuration: "⚙️ Configuração",
+    Geral: "📌 Geral"
+};
+
+function load(dir, category = "Geral") {
 
     const files = fs.readdirSync(dir);
 
@@ -15,7 +29,8 @@ function load(dir) {
 
         if (stat.isDirectory()) {
 
-            load(filePath);
+            // O nome da subpasta vira a categoria de todos os comandos dentro dela
+            load(filePath, file);
             continue;
 
         }
@@ -27,6 +42,8 @@ function load(dir) {
         const command = require(filePath);
 
         if (!command.data) continue;
+
+        command.category = CATEGORY_LABELS[category] || `📌 ${category}`;
 
         commands[command.data.name] = command;
 

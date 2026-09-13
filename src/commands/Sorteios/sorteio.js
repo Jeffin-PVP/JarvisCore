@@ -7,6 +7,8 @@ const {
 
 const GiveawayRepository = require("../../database/repositories/GiveawayRepository");
 const GiveawayManager = require("../../managers/GiveawayManager");
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
 
 module.exports = {
 
@@ -28,6 +30,18 @@ module.exports = {
                 .addIntegerOption(o => o.setName("vencedores").setDescription("Quantidade de vencedores (padrão: 1).").setMinValue(1).setMaxValue(20).setRequired(false))
                 .addChannelOption(o => o.setName("canal").setDescription("Canal onde o sorteio será postado (padrão: canal atual).").addChannelTypes(ChannelType.GuildText).setRequired(false))
                 .addRoleOption(o => o.setName("cargo").setDescription("Cargo necessário para participar (opcional).").setRequired(false))
+
+        )
+
+        .addSubcommand(sub =>
+
+            sub
+                .setName("editar")
+                .setDescription("Edita um sorteio em andamento (só os campos informados são alterados).")
+                .addIntegerOption(o => o.setName("id").setDescription("ID do sorteio (veja em /sorteio listar).").setRequired(true))
+                .addStringOption(o => o.setName("premio").setDescription("Novo prêmio.").setRequired(false))
+                .addStringOption(o => o.setName("duracao").setDescription("Nova duração a partir de AGORA (ex: 1h, 2d).").setRequired(false))
+                .addIntegerOption(o => o.setName("vencedores").setDescription("Nova quantidade de vencedores.").setMinValue(1).setMaxValue(20).setRequired(false))
 
         )
 
@@ -56,12 +70,101 @@ module.exports = {
                 .setName("listar")
                 .setDescription("Lista os sorteios em andamento neste servidor.")
 
+        )
+
+        .addSubcommandGroup(group =>
+
+            group
+                .setName("multiplicador")
+                .setDescription("Cargos que valem entradas extras nos sorteios (ex: booster vale 2x).")
+
+                .addSubcommand(sub =>
+                    sub
+                        .setName("adicionar")
+                        .setDescription("Define quantas entradas um cargo vale.")
+                        .addRoleOption(o => o.setName("cargo").setDescription("Cargo que vai valer entradas extras.").setRequired(true))
+                        .addIntegerOption(o => o.setName("valor").setDescription("Quantas entradas esse cargo vale (ex: 2).").setMinValue(2).setMaxValue(10).setRequired(true))
+                )
+
+                .addSubcommand(sub =>
+                    sub
+                        .setName("remover")
+                        .setDescription("Remove o multiplicador de um cargo.")
+                        .addRoleOption(o => o.setName("cargo").setDescription("Cargo a remover.").setRequired(true))
+                )
+
+                .addSubcommand(sub =>
+                    sub
+                        .setName("listar")
+                        .setDescription("Lista os multiplicadores configurados neste servidor.")
+                )
+
         ),
 
     async execute(interaction) {
 
+        const grupo = interaction.options.getSubcommandGroup(false);
         const sub = interaction.options.getSubcommand();
         const { guild } = interaction;
+
+        /*
+        =========================
+            MULTIPLICADOR
+        =========================
+        */
+
+        if (grupo === "multiplicador") {
+
+            if (sub === "adicionar") {
+
+                const cargo = interaction.options.getRole("cargo");
+                const valor = interaction.options.getInteger("valor");
+
+                await GiveawayRepository.addMultiplier(guild.id, cargo.id, valor);
+
+                return interaction.reply({
+                    content: `✅ Quem tiver o cargo ${cargo} agora vale **${valor}x** entradas nos sorteios.`,
+                    ephemeral: true
+                });
+
+            }
+
+            if (sub === "remover") {
+
+                const cargo = interaction.options.getRole("cargo");
+
+                await GiveawayRepository.removeMultiplier(guild.id, cargo.id);
+
+                return interaction.reply({
+                    content: `✅ Multiplicador do cargo ${cargo} removido.`,
+                    ephemeral: true
+                });
+
+            }
+
+            if (sub === "listar") {
+
+                const lista = await GiveawayRepository.listMultipliers(guild.id);
+
+                if (!lista.length) {
+
+                    return interaction.reply({
+                        content: "📭 Nenhum cargo com multiplicador configurado neste servidor.",
+                        ephemeral: true
+                    });
+
+                }
+
+                const descricao = lista.map(m => `<@&${m.role_id}> — **${m.multiplier}x** entradas`).join("\n");
+
+                return interaction.reply({
+                    embeds: [new EmbedBuilder().setColor("#5865F2").setTitle("🔢 Multiplicadores de entrada").setDescription(descricao)],
+                    ephemeral: true
+                });
+
+            }
+
+        }
 
         /*
         =========================
@@ -125,8 +228,125 @@ module.exports = {
 
             await GiveawayRepository.setMessageId(giveawayId, mensagem.id);
 
+            await LogManager.send({
+                type: LogTypes.GIVEAWAY_CREATE,
+                guild,
+                executor: interaction.user,
+                extra: { prize: premio, winners: vencedores, channelId: canal.id }
+            }).catch(() => {});
+
             return interaction.reply({
                 content: `✅ Sorteio de **${premio}** criado em ${canal}! Termina em **${GiveawayManager.formatarDuracao(duracaoMs)}**. (ID: \`${giveawayId}\`)`,
+                ephemeral: true
+            });
+
+        }
+
+        /*
+        =========================
+            EDITAR
+        =========================
+        */
+
+        if (sub === "editar") {
+
+            const id = interaction.options.getInteger("id");
+            const novoPremio = interaction.options.getString("premio");
+            const novaDuracaoTexto = interaction.options.getString("duracao");
+            const novosVencedores = interaction.options.getInteger("vencedores");
+
+            const giveaway = await GiveawayRepository.get(id);
+
+            if (!giveaway || giveaway.guild_id !== guild.id) {
+
+                return interaction.reply({
+                    content: "⚠️ Sorteio não encontrado neste servidor.",
+                    ephemeral: true
+                });
+
+            }
+
+            if (giveaway.status !== "running") {
+
+                return interaction.reply({
+                    content: "⚠️ Só é possível editar um sorteio que ainda está em andamento.",
+                    ephemeral: true
+                });
+
+            }
+
+            if (!novoPremio && !novaDuracaoTexto && !novosVencedores) {
+
+                return interaction.reply({
+                    content: "⚠️ Informe pelo menos um campo pra alterar (prêmio, duração ou vencedores).",
+                    ephemeral: true
+                });
+
+            }
+
+            const mudancas = [];
+            const camposAtualizados = {};
+
+            if (novoPremio) {
+                camposAtualizados.prize = novoPremio;
+                mudancas.push(`Prêmio: **${giveaway.prize}** → **${novoPremio}**`);
+            }
+
+            if (novosVencedores) {
+                camposAtualizados.winnersCount = novosVencedores;
+                mudancas.push(`Vencedores: **${giveaway.winners_count}** → **${novosVencedores}**`);
+            }
+
+            if (novaDuracaoTexto) {
+
+                const duracaoMs = GiveawayManager.parseDuracao(novaDuracaoTexto);
+
+                if (!duracaoMs || duracaoMs < 10 * 1000) {
+
+                    return interaction.reply({
+                        content: "⚠️ Duração inválida. Use algo como `10m`, `2h`, `1d` ou `1d12h`.",
+                        ephemeral: true
+                    });
+
+                }
+
+                camposAtualizados.endsAt = Date.now() + duracaoMs;
+                mudancas.push(`Termina agora em: **${GiveawayManager.formatarDuracao(duracaoMs)}**`);
+
+            }
+
+            await GiveawayRepository.update(id, camposAtualizados);
+
+            const giveawayAtualizado = await GiveawayRepository.get(id);
+
+            try {
+
+                const canal = await guild.channels.fetch(giveawayAtualizado.channel_id);
+
+                if (giveawayAtualizado.message_id) {
+
+                    const mensagem = await canal.messages.fetch(giveawayAtualizado.message_id);
+                    const totalParticipantes = await GiveawayRepository.countEntries(id);
+
+                    await mensagem.edit({
+                        embeds: [GiveawayManager.buildEmbedAtivo(giveawayAtualizado, totalParticipantes)]
+                    });
+
+                }
+
+            } catch {
+                // canal/mensagem pode não existir mais, tudo bem
+            }
+
+            await LogManager.send({
+                type: LogTypes.GIVEAWAY_EDIT,
+                guild,
+                executor: interaction.user,
+                extra: { prize: giveawayAtualizado.prize, mudancas: mudancas.join("\n") }
+            }).catch(() => {});
+
+            return interaction.reply({
+                content: `✅ Sorteio \`${id}\` atualizado:\n${mudancas.join("\n")}`,
                 ephemeral: true
             });
 
@@ -188,6 +408,13 @@ module.exports = {
                 // canal/mensagem pode não existir mais, tudo bem
             }
 
+            await LogManager.send({
+                type: LogTypes.GIVEAWAY_CANCEL,
+                guild,
+                executor: interaction.user,
+                extra: { prize: giveaway.prize }
+            }).catch(() => {});
+
             return interaction.reply({
                 content: `✅ Sorteio \`${id}\` cancelado.`,
                 ephemeral: true
@@ -217,7 +444,7 @@ module.exports = {
 
             }
 
-            const resultado = await GiveawayManager.rerollSorteio(interaction.client, id, vencedores);
+            const resultado = await GiveawayManager.rerollSorteio(interaction.client, id, vencedores, interaction.user);
 
             if (!resultado.sucesso) {
 

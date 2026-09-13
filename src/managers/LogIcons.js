@@ -130,6 +130,14 @@ module.exports = {
 
     BOT_START: "🟢",
     BOT_STOP: "🔴",
-    DATABASE_ERROR: "💾❌"
+    DATABASE_ERROR: "💾❌",
+
+    /*
+    =========================
+        SORTEIOS
+    =========================
+    */
+
+    GIVEAWAY: "🎉"
 
 };

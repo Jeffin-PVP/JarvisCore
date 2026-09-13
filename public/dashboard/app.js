@@ -128,8 +128,9 @@
             document.getElementById(`secao-${alvo}`).classList.remove("oculto");
 
             if (alvo === "visao-geral") carregarVisaoGeral();
-            if (alvo === "servidores") carregarServidores();
+            if (alvo === "servidores") { carregarServidores(); carregarBanidos(); }
             if (alvo === "status") carregarStatus();
+            if (alvo === "comunicados") carregarHistoricoComunicados();
 
         });
 
@@ -182,6 +183,109 @@
 
         }
 
+        carregarGraficoCrescimento();
+
+    }
+
+    /*
+    =========================
+        GRÁFICO DE CRESCIMENTO (canvas puro, sem lib externa)
+    =========================
+    */
+
+    async function carregarGraficoCrescimento() {
+
+        const canvas = document.getElementById("grafico-crescimento");
+        const vazio = document.getElementById("grafico-vazio");
+
+        try {
+
+            const { history } = await api("/stats-history");
+
+            if (!history || history.length < 2) {
+
+                canvas.classList.add("oculto");
+                vazio.classList.remove("oculto");
+                return;
+
+            }
+
+            canvas.classList.remove("oculto");
+            vazio.classList.add("oculto");
+
+            desenharGrafico(canvas, history);
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+    function desenharGrafico(canvas, history) {
+
+        const ctx = canvas.getContext("2d");
+        const largura = canvas.clientWidth || 600;
+        const altura = 180;
+
+        canvas.width = largura * devicePixelRatio;
+        canvas.height = altura * devicePixelRatio;
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+
+        ctx.clearRect(0, 0, largura, altura);
+
+        const padding = { top: 10, right: 10, bottom: 24, left: 40 };
+        const areaW = largura - padding.left - padding.right;
+        const areaH = altura - padding.top - padding.bottom;
+
+        const valores = history.map(h => h.servers);
+        const max = Math.max(...valores, 1);
+        const min = Math.min(...valores, 0);
+        const range = Math.max(max - min, 1);
+
+        const pontos = history.map((h, i) => ({
+            x: padding.left + (i / (history.length - 1)) * areaW,
+            y: padding.top + areaH - ((h.servers - min) / range) * areaH,
+            data: h.date,
+            servers: h.servers
+        }));
+
+        // linha
+        ctx.beginPath();
+        ctx.strokeStyle = "#5865f2";
+        ctx.lineWidth = 2;
+
+        pontos.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+
+        ctx.stroke();
+
+        // área preenchida (leve)
+        ctx.lineTo(pontos[pontos.length - 1].x, padding.top + areaH);
+        ctx.lineTo(pontos[0].x, padding.top + areaH);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(88, 101, 242, 0.12)";
+        ctx.fill();
+
+        // pontos
+        ctx.fillStyle = "#7983f5";
+        pontos.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // eixo X: primeira e última data
+        ctx.fillStyle = "#8890a4";
+        ctx.font = "11px monospace";
+        ctx.fillText(pontos[0].data, padding.left, altura - 6);
+        ctx.textAlign = "right";
+        ctx.fillText(pontos[pontos.length - 1].data, largura - padding.right, altura - 6);
+        ctx.textAlign = "left";
+
     }
 
     /*
@@ -223,6 +327,7 @@
                     <div class="servidor-acoes">
                         <button class="btn-secundario" data-acao="convite" data-id="${g.id}">Convite</button>
                         <button class="btn-perigo" data-acao="sair" data-id="${g.id}" data-nome="${escapeHtml(g.name)}">Sair</button>
+                        <button class="btn-perigo" data-acao="banir" data-id="${g.id}" data-nome="${escapeHtml(g.name)}">Banir</button>
                     </div>
                 `;
 
@@ -284,6 +389,103 @@
                 btn.disabled = false;
 
             }
+
+        }
+
+        if (acao === "banir") {
+
+            if (!confirm(`Banir "${nome}"? O bot vai sair AGORA e nunca mais entrar se for readicionado.`)) return;
+
+            const motivo = prompt("Motivo do banimento (opcional):") || null;
+
+            btn.disabled = true;
+
+            try {
+
+                await api(`/guilds/${id}/ban`, { method: "POST", body: { reason: motivo } });
+                carregarServidores();
+                carregarBanidos();
+
+            } catch (error) {
+
+                alert(error.message);
+                btn.disabled = false;
+
+            }
+
+        }
+
+    });
+
+    /*
+    =========================
+        SERVIDORES BANIDOS
+    =========================
+    */
+
+    const listaBanidosEl = document.getElementById("lista-banidos");
+
+    async function carregarBanidos() {
+
+        listaBanidosEl.innerHTML = `<p class="carregando">Carregando...</p>`;
+
+        try {
+
+            const { banned } = await api("/guilds/banned");
+
+            if (!banned.length) {
+
+                listaBanidosEl.innerHTML = `<p class="carregando">Nenhum servidor banido.</p>`;
+                return;
+
+            }
+
+            listaBanidosEl.innerHTML = "";
+
+            banned.forEach(b => {
+
+                const el = document.createElement("div");
+                el.className = "servidor-item";
+
+                el.innerHTML = `
+                    <div class="servidor-info">
+                        <div class="servidor-nome">${escapeHtml(b.guild_name || b.guild_id)}</div>
+                        <div class="servidor-meta">ID ${b.guild_id}${b.reason ? ` • ${escapeHtml(b.reason)}` : ""}</div>
+                    </div>
+                    <div class="servidor-acoes">
+                        <button class="btn-secundario" data-acao="desbanir" data-id="${b.guild_id}">Desbanir</button>
+                    </div>
+                `;
+
+                listaBanidosEl.appendChild(el);
+
+            });
+
+        } catch (error) {
+
+            listaBanidosEl.innerHTML = `<p class="carregando">${escapeHtml(error.message)}</p>`;
+
+        }
+
+    }
+
+    listaBanidosEl.addEventListener("click", async (e) => {
+
+        const btn = e.target.closest("button[data-acao='desbanir']");
+
+        if (!btn) return;
+
+        btn.disabled = true;
+
+        try {
+
+            await api(`/guilds/banned/${btn.dataset.id}/unban`, { method: "POST" });
+            carregarBanidos();
+
+        } catch (error) {
+
+            alert(error.message);
+            btn.disabled = false;
 
         }
 
@@ -460,6 +662,8 @@
                 `✅ Enviado para ${data.enviados} servidor(es).` +
                 (data.falhas.length ? `\n⚠️ Falhou em ${data.falhas.length}: ${data.falhas.map(f => f.guildName).join(", ")}` : "");
 
+            carregarHistoricoComunicados();
+
         } catch (error) {
 
             resultado.textContent = `❌ ${error.message}`;
@@ -467,6 +671,61 @@
         }
 
     });
+
+    const listaHistoricoEl = document.getElementById("lista-historico-comunicados");
+
+    function formatarDataHora(iso) {
+
+        try {
+            return new Date(iso.replace(" ", "T") + "Z").toLocaleString("pt-BR");
+        } catch {
+            return iso;
+        }
+
+    }
+
+    async function carregarHistoricoComunicados() {
+
+        listaHistoricoEl.innerHTML = `<p class="carregando">Carregando...</p>`;
+
+        try {
+
+            const { history } = await api("/broadcast/history");
+
+            if (!history.length) {
+
+                listaHistoricoEl.innerHTML = `<p class="carregando">Nenhum comunicado enviado ainda.</p>`;
+                return;
+
+            }
+
+            listaHistoricoEl.innerHTML = "";
+
+            history.forEach(h => {
+
+                const el = document.createElement("div");
+                el.className = "servidor-item";
+
+                const rotulo = h.kind === "restart" ? "🔧 Reinício" : "📢 Comunicado";
+
+                el.innerHTML = `
+                    <div class="servidor-info">
+                        <div class="servidor-nome">${rotulo} — ${escapeHtml(h.title || "(sem título)")}</div>
+                        <div class="servidor-meta">${formatarDataHora(h.created_at)} • enviado a ${h.sent_count}, falhou em ${h.failed_count}</div>
+                    </div>
+                `;
+
+                listaHistoricoEl.appendChild(el);
+
+            });
+
+        } catch (error) {
+
+            listaHistoricoEl.innerHTML = `<p class="carregando">${escapeHtml(error.message)}</p>`;
+
+        }
+
+    }
 
     /*
     =========================
@@ -494,6 +753,8 @@
             });
 
             resultado.textContent = `✅ ${data.message} (avisados: ${data.broadcast.enviados})`;
+
+            carregarHistoricoComunicados();
 
         } catch (error) {
 

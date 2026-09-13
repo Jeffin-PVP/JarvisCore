@@ -12,6 +12,9 @@ const GiveawayManager =
 const PresenceManager =
     require("./src/managers/PresenceManager");
 
+const StatsHistoryManager =
+    require("./src/managers/StatsHistoryManager");
+
 const {
     Client,
     GatewayIntentBits,
@@ -166,6 +169,8 @@ client.once(
         GiveawayManager.start(client);
 
         PresenceManager.start(client);
+
+        StatsHistoryManager.start(client);
 
         console.log(
             `🆔 ID: ${client.user.id}`

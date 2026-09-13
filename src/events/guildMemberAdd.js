@@ -1,8 +1,10 @@
-const { Events } = require("discord.js");
+const { Events, AttachmentBuilder } = require("discord.js");
 
 const LogManager = require("../managers/LogManager");
 const LogTypes = require("../managers/LogTypes");
 const AutoroleRepository = require("../database/repositories/AutoroleRepository");
+const WelcomeRepository = require("../database/repositories/WelcomeRepository");
+const WelcomeCardManager = require("../managers/WelcomeCardManager");
 
 module.exports = {
 
@@ -31,6 +33,38 @@ module.exports = {
                 if (!role) continue;
 
                 await member.roles.add(role).catch(() => null);
+
+            }
+
+        }
+
+        // Cartão de boas-vindas
+        if (!member.user.bot) {
+
+            try {
+
+                const config = await WelcomeRepository.get(member.guild.id);
+
+                if (config.enabled && config.channel_id) {
+
+                    const canal = await member.guild.channels.fetch(config.channel_id).catch(() => null);
+
+                    if (canal) {
+
+                        const buffer = await WelcomeCardManager.gerarCartao(member, config);
+                        const anexo = new AttachmentBuilder(buffer, { name: "boas-vindas.png" });
+
+                        const conteudo = WelcomeCardManager.aplicarVariaveis(config.message_content, { member });
+
+                        await canal.send({ content: conteudo, files: [anexo] }).catch(() => {});
+
+                    }
+
+                }
+
+            } catch (error) {
+
+                console.error(`❌ Falha ao gerar cartão de boas-vindas em "${member.guild.name}":`, error);
 
             }
 

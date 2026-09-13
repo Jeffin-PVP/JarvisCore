@@ -436,6 +436,22 @@ ADD COLUMN levelup_enabled INTEGER DEFAULT 1;
 
     `);
 
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS giveaway_multipliers (
+
+            guild_id TEXT NOT NULL,
+
+            role_id TEXT NOT NULL,
+
+            multiplier INTEGER NOT NULL DEFAULT 2,
+
+            PRIMARY KEY (guild_id, role_id)
+
+        );
+
+    `);
+
     /*
     =========================
         DASHBOARD DO DONO
@@ -465,6 +481,90 @@ ADD COLUMN levelup_enabled INTEGER DEFAULT 1;
             key TEXT PRIMARY KEY,
 
             value TEXT
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS bot_stats_history (
+
+            date TEXT PRIMARY KEY,
+
+            servers INTEGER NOT NULL,
+
+            members INTEGER NOT NULL
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS broadcasts (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            title TEXT,
+
+            description TEXT NOT NULL,
+
+            color TEXT,
+
+            kind TEXT NOT NULL DEFAULT 'broadcast',
+
+            sent_count INTEGER NOT NULL DEFAULT 0,
+
+            failed_count INTEGER NOT NULL DEFAULT 0,
+
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS banned_guilds (
+
+            guild_id TEXT PRIMARY KEY,
+
+            guild_name TEXT,
+
+            reason TEXT,
+
+            banned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
+        );
+
+    `);
+
+    /*
+    =========================
+        BOAS-VINDAS
+    =========================
+    */
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS welcome_settings (
+
+            guild_id TEXT PRIMARY KEY,
+
+            enabled INTEGER NOT NULL DEFAULT 0,
+
+            channel_id TEXT,
+
+            background_url TEXT,
+
+            title_text TEXT,
+
+            subtitle_text TEXT,
+
+            message_content TEXT,
+
+            accent_color TEXT DEFAULT '#5865F2'
 
         );
 

@@ -153,6 +153,87 @@ class GiveawayRepository {
 
     }
 
+    // Atualiza só os campos passados (prêmio, vencedores e/ou prazo)
+    static async update(id, { prize, winnersCount, endsAt }) {
+
+        const campos = [];
+        const valores = [];
+
+        if (prize !== undefined) { campos.push("prize = ?"); valores.push(prize); }
+        if (winnersCount !== undefined) { campos.push("winners_count = ?"); valores.push(winnersCount); }
+        if (endsAt !== undefined) { campos.push("ends_at = ?"); valores.push(endsAt); }
+
+        if (!campos.length) return;
+
+        valores.push(id);
+
+        await database.run(
+
+            `
+            UPDATE giveaways
+            SET ${campos.join(", ")}
+            WHERE id = ?
+            `,
+
+            valores
+
+        );
+
+    }
+
+    /*
+    =========================
+        MULTIPLICADORES DE ENTRADA
+    =========================
+    */
+
+    static async addMultiplier(guildId, roleId, multiplier) {
+
+        await database.run(
+
+            `
+            INSERT INTO giveaway_multipliers (guild_id, role_id, multiplier)
+            VALUES (?, ?, ?)
+            ON CONFLICT(guild_id, role_id) DO UPDATE SET multiplier = excluded.multiplier
+            `,
+
+            [guildId, roleId, multiplier]
+
+        );
+
+    }
+
+    static async removeMultiplier(guildId, roleId) {
+
+        await database.run(
+
+            `
+            DELETE FROM giveaway_multipliers
+            WHERE guild_id = ? AND role_id = ?
+            `,
+
+            [guildId, roleId]
+
+        );
+
+    }
+
+    static async listMultipliers(guildId) {
+
+        return database.all(
+
+            `
+            SELECT *
+            FROM giveaway_multipliers
+            WHERE guild_id = ?
+            `,
+
+            [guildId]
+
+        );
+
+    }
+
     /*
     =========================
         PARTICIPAÇÕES

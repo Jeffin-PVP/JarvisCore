@@ -246,6 +246,24 @@ input, textarea {
     line-height: 1.6;
 }
 
+.subtitulo {
+    font-size: 15px;
+    margin: 30px 0 12px;
+    color: var(--texto);
+}
+
+.grafico-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.grafico-card canvas {
+    width: 100%;
+    display: block;
+}
+
 /* ===================== STATS ===================== */
 
 .grid-stats {

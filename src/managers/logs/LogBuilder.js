@@ -796,6 +796,85 @@ class LogBuilder {
                 break;
 
             // ==========================
+            // SORTEIOS
+            // ==========================
+
+            case LogTypes.GIVEAWAY_CREATE:
+
+                embed
+                    .setColor(LogColors.GIVEAWAY)
+                    .setTitle(`${LogIcons.GIVEAWAY} Sorteio Criado`)
+                    .addFields(
+                        { name: "🎁 Prêmio", value: data.extra?.prize || "—" },
+                        { name: "🏆 Vencedores", value: String(data.extra?.winners ?? "—"), inline: true },
+                        { name: "📍 Canal", value: data.extra?.channelId ? `<#${data.extra.channelId}>` : "—", inline: true },
+                        { name: "🛡️ Criado por", value: executorTag }
+                    );
+
+                break;
+
+            case LogTypes.GIVEAWAY_END:
+
+                embed
+                    .setColor(LogColors.GIVEAWAY)
+                    .setTitle(`${LogIcons.GIVEAWAY} Sorteio Encerrado`)
+                    .addFields(
+                        { name: "🎁 Prêmio", value: data.extra?.prize || "—" },
+                        {
+                            name: "🏆 Vencedor(es)",
+                            value: data.extra?.winners?.length
+                                ? data.extra.winners.map(id => `<@${id}>`).join(", ")
+                                : "Ninguém participou"
+                        },
+                        { name: "👥 Participantes", value: String(data.extra?.participants ?? 0), inline: true }
+                    );
+
+                break;
+
+            case LogTypes.GIVEAWAY_CANCEL:
+
+                embed
+                    .setColor(LogColors.GIVEAWAY_CANCEL)
+                    .setTitle(`${LogIcons.GIVEAWAY} Sorteio Cancelado`)
+                    .addFields(
+                        { name: "🎁 Prêmio", value: data.extra?.prize || "—" },
+                        { name: "🛡️ Cancelado por", value: executorTag }
+                    );
+
+                break;
+
+            case LogTypes.GIVEAWAY_REROLL:
+
+                embed
+                    .setColor(LogColors.GIVEAWAY)
+                    .setTitle(`${LogIcons.GIVEAWAY} Reroll de Sorteio`)
+                    .addFields(
+                        { name: "🎁 Prêmio", value: data.extra?.prize || "—" },
+                        {
+                            name: "🏆 Novo(s) vencedor(es)",
+                            value: data.extra?.winners?.length
+                                ? data.extra.winners.map(id => `<@${id}>`).join(", ")
+                                : "—"
+                        },
+                        { name: "🛡️ Solicitado por", value: executorTag }
+                    );
+
+                break;
+
+            case LogTypes.GIVEAWAY_EDIT:
+
+                embed
+                    .setColor(LogColors.GIVEAWAY)
+                    .setTitle(`${LogIcons.GIVEAWAY} Sorteio Editado`)
+                    .addFields(
+                        { name: "🎁 Prêmio", value: data.extra?.prize || "—" },
+                        { name: "✏️ Alterações", value: data.extra?.mudancas || "—" },
+                        { name: "🛡️ Editado por", value: executorTag }
+                    );
+
+                break;
+
+            // ==========================
             // FALLBACK GENÉRICO
             //
             // Garante que nenhum log seja perdido
