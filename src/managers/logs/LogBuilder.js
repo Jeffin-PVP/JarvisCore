@@ -875,6 +875,48 @@ class LogBuilder {
                 break;
 
             // ==========================
+            // AUTOMOD
+            // ==========================
+
+            case LogTypes.AUTOMOD_ACTION:
+
+                embed
+                    .setColor(LogColors.AUTOMOD)
+                    .setTitle(`${LogIcons.AUTOMOD} AutoMod`)
+                    .addFields(
+                        { name: "👤 Usuário", value: targetTag, inline: true },
+                        { name: "📍 Canal", value: data.extra?.channelId ? `<#${data.extra.channelId}>` : "—", inline: true },
+                        { name: "📋 Motivo", value: data.reason || "—" },
+                        { name: "⚙️ Ações", value: data.extra?.actions || "—" }
+                    );
+
+                break;
+
+            case LogTypes.RAID_DETECTED:
+
+                embed
+                    .setColor(LogColors.RAID)
+                    .setTitle(`${LogIcons.RAID} Possível raid detectado`)
+                    .addFields(
+                        { name: "👥 Entradas na janela", value: String(data.extra?.joins ?? "—"), inline: true },
+                        { name: "⏱️ Janela", value: `${data.extra?.windowSeconds ?? "—"}s`, inline: true },
+                        { name: "🛡️ Ação tomada", value: data.extra?.action || "—" }
+                    );
+
+                break;
+
+            case LogTypes.RAID_LOCKDOWN_LIFT:
+
+                embed
+                    .setColor(LogColors.AUTOMOD)
+                    .setTitle(`${LogIcons.RAID} Lockdown de anti-raid encerrado`)
+                    .addFields(
+                        { name: "🔓 Canais destravados", value: String(data.extra?.channelsUnlocked ?? 0) }
+                    );
+
+                break;
+
+            // ==========================
             // FALLBACK GENÉRICO
             //
             // Garante que nenhum log seja perdido

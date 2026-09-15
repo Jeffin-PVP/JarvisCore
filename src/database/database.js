@@ -570,6 +570,67 @@ ADD COLUMN levelup_enabled INTEGER DEFAULT 1;
 
     `);
 
+    /*
+    =========================
+        AUTOMOD
+    =========================
+    */
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS automod_settings (
+
+            guild_id TEXT PRIMARY KEY,
+
+            enabled INTEGER NOT NULL DEFAULT 0,
+
+            ignored_channels TEXT NOT NULL DEFAULT '',
+            ignored_roles TEXT NOT NULL DEFAULT '',
+            mute_duration_minutes INTEGER NOT NULL DEFAULT 10,
+
+            spam_enabled INTEGER NOT NULL DEFAULT 1,
+            spam_max_messages INTEGER NOT NULL DEFAULT 6,
+            spam_interval_seconds INTEGER NOT NULL DEFAULT 6,
+            spam_actions TEXT NOT NULL DEFAULT 'delete,notify,warn',
+
+            emoji_enabled INTEGER NOT NULL DEFAULT 1,
+            emoji_max_count INTEGER NOT NULL DEFAULT 10,
+            emoji_actions TEXT NOT NULL DEFAULT 'delete,notify',
+
+            swear_enabled INTEGER NOT NULL DEFAULT 1,
+            swear_actions TEXT NOT NULL DEFAULT 'delete,notify,warn',
+            swear_custom_words TEXT NOT NULL DEFAULT '',
+
+            mention_enabled INTEGER NOT NULL DEFAULT 1,
+            mention_max_count INTEGER NOT NULL DEFAULT 5,
+            mention_actions TEXT NOT NULL DEFAULT 'delete,warn,mute',
+
+            invite_enabled INTEGER NOT NULL DEFAULT 0,
+            invite_actions TEXT NOT NULL DEFAULT 'delete,notify',
+
+            raid_enabled INTEGER NOT NULL DEFAULT 0,
+            raid_join_threshold INTEGER NOT NULL DEFAULT 10,
+            raid_interval_seconds INTEGER NOT NULL DEFAULT 60,
+            raid_action TEXT NOT NULL DEFAULT 'lockdown'
+
+        );
+
+    `);
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS automod_raid_locks (
+
+            guild_id TEXT NOT NULL,
+
+            channel_id TEXT NOT NULL,
+
+            PRIMARY KEY (guild_id, channel_id)
+
+        );
+
+    `);
+
 });
 
 // Helpers

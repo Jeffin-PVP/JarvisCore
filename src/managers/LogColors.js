@@ -195,6 +195,17 @@ module.exports = {
 
     GIVEAWAY: "#57F287",
 
-    GIVEAWAY_CANCEL: "#ED4245"
+    GIVEAWAY_CANCEL: "#ED4245",
+
+
+    /*
+    =========================
+        AUTOMOD
+    =========================
+    */
+
+    AUTOMOD: "#EB459E",
+
+    RAID: "#ED4245"
 
 };

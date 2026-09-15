@@ -5,6 +5,7 @@ const LogTypes = require("../managers/LogTypes");
 const AutoroleRepository = require("../database/repositories/AutoroleRepository");
 const WelcomeRepository = require("../database/repositories/WelcomeRepository");
 const WelcomeCardManager = require("../managers/WelcomeCardManager");
+const AutomodManager = require("../managers/AutomodManager");
 
 module.exports = {
 
@@ -20,6 +21,17 @@ module.exports = {
                 memberCount: member.guild.memberCount
             }
         });
+
+        // Anti-raid: registra a entrada e ativa lockdown/kick/ban se detectar um pico
+        if (!member.user.bot) {
+
+            await AutomodManager.registrarEntrada(member).catch(error => {
+
+                console.error(`❌ Erro no anti-raid em "${member.guild.name}":`, error);
+
+            });
+
+        }
 
         // Auto-role de entrada
         if (!member.user.bot) {

@@ -165,6 +165,17 @@ const CATEGORIES = {
             LogTypes.GIVEAWAY_REROLL,
             LogTypes.GIVEAWAY_EDIT
         ]
+    },
+
+    automod: {
+        label: "AutoMod",
+        emoji: "🛡️",
+        defaultEnabled: true,
+        types: [
+            LogTypes.AUTOMOD_ACTION,
+            LogTypes.RAID_DETECTED,
+            LogTypes.RAID_LOCKDOWN_LIFT
+        ]
     }
 
 };

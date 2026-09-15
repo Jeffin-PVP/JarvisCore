@@ -1,6 +1,7 @@
 const AIManager = require("../ai/AIManager");
 const ContextProvider = require("../ai/ContextProvider");
 const LevelManager = require("../managers/LevelManager");
+const AutomodManager = require("../managers/AutomodManager");
 
 module.exports = {
 
@@ -11,6 +12,17 @@ module.exports = {
         if (message.author.bot) return;
 
         if (!message.guild) return;
+
+        // AutoMod: se a mensagem for barrada (spam/emoji/palavrão/menção/convite),
+        // não processa XP nem resposta de IA em cima dela
+        const tratadaPeloAutomod = await AutomodManager.checkMessage(message).catch(error => {
+
+            console.error("[AutoMod] Erro ao verificar mensagem:", error);
+            return false;
+
+        });
+
+        if (tratadaPeloAutomod) return;
 
         // Concede XP (com cooldown) independente de mencionar o bot ou não
         await LevelManager.handleMessage(message);

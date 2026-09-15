@@ -212,7 +212,19 @@ module.exports = {
 
     GIVEAWAY_REROLL: "GIVEAWAY_REROLL",
 
-    GIVEAWAY_EDIT: "GIVEAWAY_EDIT"
+    GIVEAWAY_EDIT: "GIVEAWAY_EDIT",
+
+
+    // =========================
+    // AUTOMOD
+    // =========================
+
+
+    AUTOMOD_ACTION: "AUTOMOD_ACTION",
+
+    RAID_DETECTED: "RAID_DETECTED",
+
+    RAID_LOCKDOWN_LIFT: "RAID_LOCKDOWN_LIFT"
 
 
 };

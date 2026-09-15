@@ -14,7 +14,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.100",
+    "@napi-rs/canvas": "^0.1.53",
     "cors": "^2.8.6",
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
