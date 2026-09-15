@@ -16,6 +16,10 @@ class ApiServer {
 
         this.app = express();
 
+        this.app.get("/teste", (req, res) => {
+            res.status(200).send("JARVISCORE PUBLIC TEST OK");
+        });
+
         this.app.use(cors());
         this.app.use(express.json());
 
