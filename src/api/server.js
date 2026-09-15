@@ -55,9 +55,9 @@ class ApiServer {
     }
 
 
-    start(port = 3000) {
+    start(port = process.env.PORT || 3000) {
 
-        this.app.listen(port, () => {
+        this.app.listen(port, "0.0.0.0", () => {
 
             console.log(
                 `🌐 API online na porta ${port}`
