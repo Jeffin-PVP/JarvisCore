@@ -61,6 +61,13 @@ class ApiServer {
 
     start(port = process.env.PORT || 3000) {
 
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        console.log("🌐 CONFIGURAÇÃO DO SERVIDOR");
+        console.log("PORT recebido:", process.env.PORT);
+        console.log("PORT usado:", port);
+        console.log("PUBLIC_URL:", process.env.PUBLIC_URL);
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
         this.app.listen(port, "0.0.0.0", () => {
 
             console.log(
