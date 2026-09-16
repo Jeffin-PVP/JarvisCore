@@ -163,6 +163,66 @@ Contexto atual (use para responder de forma consciente de onde você está, mas 
 
     /*
     =====================================
+        IA PARA USER INSTALL
+    =====================================
+
+        Esta rota não usa ferramentas do servidor.
+        Isso permite que /ia perguntar funcione mesmo
+        quando o JarvisCore não está instalado no servidor.
+    */
+
+    static async askUser({ interaction, question }) {
+
+        const channelId = interaction.channelId || interaction.channel?.id || `user:${interaction.user.id}`;
+
+        const guildName = interaction.guild?.name || "conversa privada";
+
+        const contextBlock = `
+Contexto limitado desta interação:
+- Local: ${guildName}
+- Usuário: ${interaction.user.username}
+
+IMPORTANTE:
+- Esta conversa usa o modo de instalação pessoal (User Install).
+- Não presuma que o JarvisCore está instalado no servidor.
+- Não tente consultar membros, canais, cargos, permissões, regras ou outros dados do servidor.
+- Não execute ações administrativas.
+- Responda somente à pergunta do usuário usando o conhecimento disponível e o histórico desta conversa.
+`;
+
+        const messages = [
+            {
+                role: "system",
+                content: `${systemPrompt}\n${contextBlock}`
+            },
+            ...ConversationMemory.get(channelId),
+            {
+                role: "user",
+                content: question
+            }
+        ];
+
+        const response = await groq.chat.completions.create({
+            model: MODEL,
+            temperature: 0.3,
+            messages
+        });
+
+        const finalContent = response.choices?.[0]?.message?.content?.trim();
+
+        if (!finalContent) {
+            throw new Error("A IA retornou uma resposta vazia.");
+        }
+
+        ConversationMemory.push(channelId, "user", question);
+        ConversationMemory.push(channelId, "assistant", finalContent);
+
+        return finalContent;
+
+    }
+
+    /*
+    =====================================
         GERADOR DE EMBEDS
     =====================================
     */
