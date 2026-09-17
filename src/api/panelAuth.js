@@ -120,15 +120,48 @@ module.exports = (client) => {
             const user = await userRes.json();
             const guildsRaw = await guildsRes.json();
 
-            const guilds = guildsRaw
-                .filter(temPermissaoDeGerenciar)
-                .map(g => ({
-                    id: g.id,
-                    name: g.name,
-                    icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
-                    botPresent: client.guilds.cache.has(g.id)
-                }))
-                .sort((a, b) => Number(b.botPresent) - Number(a.botPresent));
+            /*
+            =========================
+                SERVIDORES DO PAINEL
+            =========================
+
+                Dono do JarvisCore:
+                - pode ver TODOS os servidores onde o bot está;
+                - isso inclui servidores onde o dono não está pessoalmente.
+
+                Outros usuários:
+                - continuam vendo somente servidores onde estão;
+                - precisam ter permissão de gerenciar o servidor.
+            */
+
+            const isOwner = String(user.id) === String(process.env.OWNER_ID);
+
+            let guilds;
+
+            if (isOwner) {
+
+                guilds = [...client.guilds.cache.values()]
+                    .map(g => ({
+                        id: g.id,
+                        name: g.name,
+                        icon: g.iconURL({ extension: "png", size: 128 }),
+                        botPresent: true
+                    }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+            } else {
+
+                guilds = guildsRaw
+                    .filter(temPermissaoDeGerenciar)
+                    .map(g => ({
+                        id: g.id,
+                        name: g.name,
+                        icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png` : null,
+                        botPresent: client.guilds.cache.has(g.id)
+                    }))
+                    .sort((a, b) => Number(b.botPresent) - Number(a.botPresent));
+
+            }
 
             limparSessoesExpiradas();
 
@@ -138,6 +171,7 @@ module.exports = (client) => {
                 user: {
                     id: user.id,
                     username: user.global_name || user.username,
+                    isOwner,
                     avatar: user.avatar
                         ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
                         : `https://cdn.discordapp.com/embed/avatars/${Number(user.discriminator || 0) % 5}.png`
