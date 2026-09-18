@@ -25,7 +25,7 @@ class ApiServer {
 
         this.app.get("/", (req, res) => {
 
-            res.send("JarvisCore API funcionando!");
+            res.send("<h1>JarvisCore API funcionando! </h1> <h3> Caso esteja tentando acessar o painel de controle, acesse https://jarviscore.injectcloud.space/panel/. <br> <br> Se quiser testar a API do JarvisCore, acesse https://jarviscore.injectcloud.space/teste.<h3/>");
 
         });
 
